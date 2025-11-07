@@ -57,14 +57,18 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
     testImplementation("io.mockk:mockk:1.14.5")
 
+    // K3s Module 추가
+    testImplementation("org.testcontainers:k3s:1.19.7")
+    testImplementation("io.fabric8:kubernetes-client:6.10.0")
+
     // Karate DSL for E2E Testing
     testImplementation("com.intuit.karate:karate-junit5:1.4.1")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform {
-        // E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
-        excludeTags("e2e-test")
+        // K8s 통합 테스트와 E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
+        excludeTags("k8s-integration-test", "e2e-test")
     }
 
     // 메모리 설정 (통합테스트 Testcontainers 실행을 위해)
@@ -82,6 +86,24 @@ tasks.withType<Test> {
         showCauses = true
         showStackTraces = true
     }
+}
+
+// K8s 통합 테스트 전용 태스크
+val k8sIntegrationTest by tasks.registering(Test::class) {
+    description = "Runs K8s integration tests (K3s)"
+    group = "verification"
+
+    useJUnitPlatform {
+        includeTags("k8s-integration-test")
+    }
+
+    // K3s 시작 시간 고려하여 타임아웃 증가
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+
+    shouldRunAfter(tasks.test)
 }
 
 // E2E 테스트 전용 태스크
