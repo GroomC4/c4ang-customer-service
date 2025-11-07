@@ -1,8 +1,8 @@
 package com.groom.customer.k8s
 
 import com.groom.infra.testcontainers.K8sContainerExtension
+import com.groom.infra.testcontainers.K8sHelmHelper
 import com.groom.infra.testcontainers.K8sIntegrationTest
-import io.fabric8.kubernetes.api.model.NamespaceBuilder
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -16,18 +16,18 @@ class CustomerServiceK8sIntegrationTest {
             val client = K8sContainerExtension.getKubernetesClient()
 
             // 네임스페이스 생성
-            client.namespaces().resource(
-                NamespaceBuilder()
-                    .withNewMetadata()
-                        .withName("customer-test")
-                    .endMetadata()
-                    .build()
-            ).create()
-
+            K8sHelmHelper.createNamespace("customer-test")
             println("✅ K8s test namespace created: customer-test")
 
-            // Helm 차트 배포 (실제 환경에서는 c4ang-infra/helm 경로 사용)
-            // K8sContainerExtension.installHelmChart(
+            // Helm 차트 배포 (호스트에서 K3s로 배포)
+            // 주의: helm dependency build를 먼저 실행해야 합니다!
+            //
+            // cd c4ang-infra/helm
+            // ./build-dependencies.sh
+            //
+            // 그 후 아래 주석을 해제하여 사용:
+            //
+            // val success = K8sHelmHelper.installHelmChart(
             //     chartPath = "../c4ang-infra/helm/test-infrastructure",
             //     releaseName = "test-infra",
             //     namespace = "customer-test",
@@ -37,6 +37,9 @@ class CustomerServiceK8sIntegrationTest {
             //         "postgresql.auth.password" to "test"
             //     )
             // )
+            //
+            // require(success) { "Failed to install test infrastructure" }
+            // println("✅ Test infrastructure installed successfully")
         }
     }
 
