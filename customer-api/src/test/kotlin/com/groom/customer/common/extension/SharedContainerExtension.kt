@@ -14,9 +14,9 @@ class CustomerServiceContainerExtension : BaseContainerExtension() {
         return resolveComposeFile("c4ang-infra/docker-compose/test/docker-compose-integration-test.yml")
     }
 
-    override fun getSchemaFile(): File? {
+    override fun getSchemaFile(): File {
         // JPA를 사용하므로 스키마 파일 불필요
-        return null
+        return resolveComposeFile("sql/schema.sql")
     }
 }
 
