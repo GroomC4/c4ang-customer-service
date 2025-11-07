@@ -10,9 +10,7 @@ import java.io.File
  * Docker Compose 파일 경로를 제공합니다.
  */
 class CustomerServiceContainerExtension : BaseContainerExtension() {
-    override fun getComposeFile(): File {
-        return resolveComposeFile("c4ang-infra/docker-compose/test/docker-compose-integration-test.yml")
-    }
+    override fun getComposeFile(): File = resolveComposeFile("c4ang-infra/docker-compose/test/docker-compose-integration-test.yml")
 
     override fun getSchemaFile(): File {
         // JPA를 사용하므로 스키마 파일 불필요
@@ -26,6 +24,6 @@ class CustomerServiceContainerExtension : BaseContainerExtension() {
  */
 @Deprecated(
     message = "Use CustomerServiceContainerExtension instead",
-    replaceWith = ReplaceWith("CustomerServiceContainerExtension")
+    replaceWith = ReplaceWith("CustomerServiceContainerExtension"),
 )
 typealias SharedContainerExtension = CustomerServiceContainerExtension

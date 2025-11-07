@@ -12,10 +12,9 @@ import java.util.UUID
  */
 @FeignClient(
     name = "store-service",
-    url = "\${feign.clients.store-service.url:http://localhost:8081}"
+    url = "\${feign.clients.store-service.url:http://localhost:8081}",
 )
 interface StoreFeignClient : StoreClient {
-
     /**
      * 상점 생성
      *
@@ -28,7 +27,7 @@ interface StoreFeignClient : StoreClient {
     override fun create(
         ownerUserId: UUID,
         name: String,
-        description: String?
+        description: String?,
     ): StoreResponse
 
     /**
@@ -38,7 +37,9 @@ interface StoreFeignClient : StoreClient {
      * @return 상점 정보
      */
     @GetMapping("/api/v1/stores/{storeId}")
-    override fun getStore(@PathVariable storeId: UUID): StoreResponse
+    override fun getStore(
+        @PathVariable storeId: UUID,
+    ): StoreResponse
 
     /**
      * 상점 목록 조회
@@ -50,7 +51,7 @@ interface StoreFeignClient : StoreClient {
     @GetMapping("/api/v1/stores")
     override fun getStores(
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+        @RequestParam(defaultValue = "20") size: Int,
     ): StoreListResponse
 
     /**
@@ -65,7 +66,7 @@ interface StoreFeignClient : StoreClient {
     override fun getStoreProducts(
         @PathVariable storeId: UUID,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+        @RequestParam(defaultValue = "20") size: Int,
     ): ProductListResponse
 }
 
@@ -79,7 +80,7 @@ data class StoreResponse(
     val address: String?,
     val phoneNumber: String?,
     val ownerId: Long,
-    val status: StoreStatus
+    val status: StoreStatus,
 )
 
 /**
@@ -90,7 +91,7 @@ data class StoreListResponse(
     val page: Int,
     val size: Int,
     val totalElements: Long,
-    val totalPages: Int
+    val totalPages: Int,
 )
 
 /**
@@ -101,7 +102,7 @@ data class ProductListResponse(
     val page: Int,
     val size: Int,
     val totalElements: Long,
-    val totalPages: Int
+    val totalPages: Int,
 )
 
 /**
@@ -114,7 +115,7 @@ data class ProductResponse(
     val description: String?,
     val price: Long,
     val stockQuantity: Int,
-    val status: ProductStatus
+    val status: ProductStatus,
 )
 
 /**
@@ -123,7 +124,7 @@ data class ProductResponse(
 enum class StoreStatus {
     ACTIVE,
     INACTIVE,
-    SUSPENDED
+    SUSPENDED,
 }
 
 /**
@@ -132,5 +133,5 @@ enum class StoreStatus {
 enum class ProductStatus {
     AVAILABLE,
     OUT_OF_STOCK,
-    DISCONTINUED
+    DISCONTINUED,
 }

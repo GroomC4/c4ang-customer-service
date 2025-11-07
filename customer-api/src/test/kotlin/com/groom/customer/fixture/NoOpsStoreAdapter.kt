@@ -20,7 +20,7 @@ class NoOpsStoreAdapter : StoreFactory {
     override fun createNewStore(
         ownerUserId: UUID,
         name: String,
-        description: String?
+        description: String?,
     ): NewStore {
         logger.info { "NoOpsStoreAdapter.createNewStore called (Test Mode)" }
         logger.debug { "ownerUserId=$ownerUserId, name=$name, description=$description" }

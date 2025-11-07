@@ -18,7 +18,6 @@ private val logger = KotlinLogging.logger {}
 @Configuration
 @EnableConfigurationProperties(FeignClientProperties::class)
 class FeignConfig {
-
     /**
      * Feign Logger 레벨 설정
      *
@@ -38,8 +37,8 @@ class FeignConfig {
      * Feign Client 호출 실패 시 커스텀 예외 처리
      */
     @Bean
-    fun errorDecoder(): ErrorDecoder {
-        return ErrorDecoder { methodKey, response ->
+    fun errorDecoder(): ErrorDecoder =
+        ErrorDecoder { methodKey, response ->
             logger.error { "Feign client error: $methodKey, status: ${response.status()}, reason: ${response.reason()}" }
 
             when (response.status()) {
@@ -50,16 +49,31 @@ class FeignConfig {
                 else -> FeignClientException.Unknown("Unknown error: ${response.reason()}, status: ${response.status()}")
             }
         }
-    }
 }
 
 /**
  * Feign Client 호출 시 발생하는 커스텀 예외
  */
-sealed class FeignClientException(message: String) : RuntimeException(message) {
-    class BadRequest(message: String) : FeignClientException(message)
-    class NotFound(message: String) : FeignClientException(message)
-    class InternalServerError(message: String) : FeignClientException(message)
-    class ServiceUnavailable(message: String) : FeignClientException(message)
-    class Unknown(message: String) : FeignClientException(message)
+sealed class FeignClientException(
+    message: String,
+) : RuntimeException(message) {
+    class BadRequest(
+        message: String,
+    ) : FeignClientException(message)
+
+    class NotFound(
+        message: String,
+    ) : FeignClientException(message)
+
+    class InternalServerError(
+        message: String,
+    ) : FeignClientException(message)
+
+    class ServiceUnavailable(
+        message: String,
+    ) : FeignClientException(message)
+
+    class Unknown(
+        message: String,
+    ) : FeignClientException(message)
 }

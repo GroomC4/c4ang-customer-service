@@ -7,10 +7,10 @@ import com.groom.customer.application.dto.RegisterOwnerCommand
 import com.groom.customer.application.service.RegisterOwnerService
 import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
-import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
-import com.groom.customer.outbound.repository.UserRepositoryImpl
 import com.groom.customer.inbound.web.dto.LoginRequest
 import com.groom.customer.inbound.web.dto.RegisterOwnerRequest
+import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
+import com.groom.customer.outbound.repository.UserRepositoryImpl
 import com.groom.customer.security.jwt.JwtProperties
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

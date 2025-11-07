@@ -13,7 +13,6 @@ import java.util.UUID
  * 향후 REST에서 gRPC로 변경 시 Adapter 코드 수정 없이 전환 가능합니다.
  */
 interface StoreClient {
-
     /**
      * 특정 상점 정보 조회
      */
@@ -31,10 +30,17 @@ interface StoreClient {
     /**
      * 상점 목록 조회
      */
-    fun getStores(page: Int, size: Int): StoreListResponse
+    fun getStores(
+        page: Int,
+        size: Int,
+    ): StoreListResponse
 
     /**
      * 특정 상점의 상품 목록 조회
      */
-    fun getStoreProducts(storeId: UUID, page: Int, size: Int): ProductListResponse
+    fun getStoreProducts(
+        storeId: UUID,
+        page: Int,
+        size: Int,
+    ): ProductListResponse
 }

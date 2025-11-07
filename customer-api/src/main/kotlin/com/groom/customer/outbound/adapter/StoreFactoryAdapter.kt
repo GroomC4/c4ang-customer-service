@@ -23,13 +23,14 @@ class StoreFactoryAdapter(
     override fun createNewStore(
         ownerUserId: UUID,
         name: String,
-        description: String?
+        description: String?,
     ): NewStore {
-        val response = storeClient.create(
-            ownerUserId = ownerUserId,
-            name = name,
-            description = description
-        )
+        val response =
+            storeClient.create(
+                ownerUserId = ownerUserId,
+                name = name,
+                description = description,
+            )
 
         return NewStore(
             id = response.id,

@@ -3,9 +3,9 @@ package com.groom.customer.inbound.web
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.common.enums.UserRole
-import com.groom.customer.outbound.repository.UserRepositoryImpl
 import com.groom.customer.inbound.web.dto.RegisterOwnerRequest
 import com.groom.customer.inbound.web.dto.SignupCustomerRequest
+import com.groom.customer.outbound.repository.UserRepositoryImpl
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

@@ -17,12 +17,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  */
 @ConfigurationProperties(prefix = "feign.clients")
 data class FeignClientProperties(
-    val storeService: ServiceConfig = ServiceConfig()
+    val storeService: ServiceConfig = ServiceConfig(),
 ) {
     data class ServiceConfig(
         val url: String = "http://localhost:8081",
         val connectTimeout: Int = 5000,
         val readTimeout: Int = 5000,
-        val loggerLevel: String = "basic"
+        val loggerLevel: String = "basic",
     )
 }
