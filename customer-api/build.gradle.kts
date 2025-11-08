@@ -60,17 +60,14 @@ dependencies {
     // K3s Module 추가
     testImplementation("org.testcontainers:k3s:1.19.7")
     testImplementation("io.fabric8:kubernetes-client:6.10.0")
+    testImplementation("org.bouncycastle:bcpkix-jdk18on:1.78")
 
     // Karate DSL for E2E Testing
     testImplementation("com.intuit.karate:karate-junit5:1.4.1")
 }
 
+// 모든 Test 태스크에 공통 설정 적용
 tasks.withType<Test> {
-    useJUnitPlatform {
-        // K8s 통합 테스트와 E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
-        excludeTags("k8s-integration-test", "e2e-test")
-    }
-
     // 메모리 설정 (통합테스트 Testcontainers 실행을 위해)
     minHeapSize = "512m"
     maxHeapSize = "2048m"
@@ -88,10 +85,21 @@ tasks.withType<Test> {
     }
 }
 
+// 기본 test 태스크만 특정 태그 제외
+tasks.test {
+    useJUnitPlatform {
+        // K8s 통합 테스트와 E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
+        excludeTags("k8s-integration-test", "e2e-test")
+    }
+}
+
 // K8s 통합 테스트 전용 태스크
 val k8sIntegrationTest by tasks.registering(Test::class) {
     description = "Runs K8s integration tests (K3s)"
     group = "verification"
+
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
 
     useJUnitPlatform {
         includeTags("k8s-integration-test")
@@ -110,6 +118,9 @@ val k8sIntegrationTest by tasks.registering(Test::class) {
 val e2eTest by tasks.registering(Test::class) {
     description = "Runs E2E tests (Karate scenarios)"
     group = "verification"
+
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
 
     useJUnitPlatform {
         includeTags("e2e-test")

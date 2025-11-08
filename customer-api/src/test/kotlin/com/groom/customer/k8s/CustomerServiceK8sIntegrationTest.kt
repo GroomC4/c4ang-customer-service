@@ -26,20 +26,20 @@ class CustomerServiceK8sIntegrationTest {
             // ./build-dependencies.sh
             //
             // 그 후 아래 주석을 해제하여 사용:
-            //
-            // val success = K8sHelmHelper.installHelmChart(
-            //     chartPath = "../c4ang-infra/helm/test-infrastructure",
-            //     releaseName = "test-infra",
-            //     namespace = "customer-test",
-            //     values = mapOf(
-            //         "postgresql.auth.database" to "customer_db",
-            //         "postgresql.auth.username" to "test",
-            //         "postgresql.auth.password" to "test"
-            //     )
-            // )
-            //
-            // require(success) { "Failed to install test infrastructure" }
-            // println("✅ Test infrastructure installed successfully")
+
+             val success = K8sHelmHelper.installHelmChart(
+                 chartPath = "../c4ang-infra/helm/test-infrastructure",
+                 releaseName = "test-infra",
+                 namespace = "customer-test",
+                 values = mapOf(
+                     "postgresql.auth.database" to "customer_db",
+                     "postgresql.auth.username" to "test",
+                     "postgresql.auth.password" to "test"
+                 )
+             )
+
+             require(success) { "Failed to install test infrastructure" }
+             println("✅ Test infrastructure installed successfully")
         }
     }
 
