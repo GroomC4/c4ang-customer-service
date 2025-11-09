@@ -9,8 +9,8 @@ import com.groom.customer.application.service.CustomerAuthenticationService
 import com.groom.customer.application.service.OwnerAuthenticationService
 import com.groom.customer.application.service.RegisterCustomerService
 import com.groom.customer.application.service.RegisterOwnerService
-import com.groom.customer.common.AbstractIntegrationTest
 import com.groom.customer.common.TransactionApplier
+import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.inbound.web.dto.RefreshTokenRequest
 import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
 import com.groom.customer.outbound.repository.UserRepositoryImpl
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -29,8 +30,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @DisplayName("토큰 리프레시 컨트롤러 통합 테스트")
+@IntegrationTest
+@SpringBootTest
 @AutoConfigureMockMvc
-class TokenRefreshControllerIntegrationTest : AbstractIntegrationTest() {
+class TokenRefreshControllerIntegrationTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 

@@ -1,22 +1,25 @@
 package com.groom.customer.common.config
 
-import com.groom.customer.common.AbstractIntegrationTest
+import com.groom.customer.common.annotation.IntegrationTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.redisson.api.RedissonClient
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import java.time.Duration
 import java.util.UUID
 
 /**
  * TestRedissonConfig 통합 테스트
  *
- * K8s 환경의 Redis를 사용하여
+ * Docker Compose 환경의 Redis를 사용하여
  * Redisson이 정상적으로 연결되고 작동하는지 검증합니다.
  */
 @Disabled("구현확인을 위한 일회성 테스트지만 이후 필요할수도 있어 비활성화만 해둠")
-class TestRedissonConfigIntegrationTest : AbstractIntegrationTest() {
+@IntegrationTest
+@SpringBootTest
+class TestRedissonConfigIntegrationTest {
     @Autowired
     private lateinit var redissonClient: RedissonClient
 

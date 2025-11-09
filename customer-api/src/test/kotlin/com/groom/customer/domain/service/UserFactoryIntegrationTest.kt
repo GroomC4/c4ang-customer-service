@@ -1,7 +1,7 @@
 package com.groom.customer.domain.service
 
-import com.groom.customer.common.AbstractIntegrationTest
 import com.groom.customer.common.TransactionApplier
+import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.domain.model.Address
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber
@@ -13,10 +13,13 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
-class UserFactoryIntegrationTest : AbstractIntegrationTest() {
+@IntegrationTest
+@SpringBootTest
+class UserFactoryIntegrationTest {
     @Autowired
     private lateinit var userFactory: UserFactory
 

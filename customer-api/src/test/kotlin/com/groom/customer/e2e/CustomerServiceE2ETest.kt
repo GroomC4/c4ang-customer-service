@@ -8,7 +8,6 @@ import org.springframework.boot.test.web.server.LocalServerPort
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CustomerServiceE2ETest : E2ETestBase() {
-
     @LocalServerPort
     private var port: Int = 0
 

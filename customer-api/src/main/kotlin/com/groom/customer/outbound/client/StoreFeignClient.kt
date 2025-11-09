@@ -13,7 +13,7 @@ import java.util.UUID
  *
  * 테스트 환경에서는 MockStoreClient를 사용하므로 이 빈은 생성되지 않습니다.
  */
-@Profile("!test & !k8s-test")
+@Profile("!test")
 @FeignClient(
     name = "store-service",
     url = "\${feign.clients.store-service.url:http://localhost:8081}",

@@ -93,9 +93,9 @@ tasks.test {
     }
 }
 
-// 통합 테스트 전용 태스크 (K8s 기반)
+// 통합 테스트 전용 태스크 (Docker Compose 기반)
 val integrationTest by tasks.registering(Test::class) {
-    description = "Runs integration tests with K8s (K3s)"
+    description = "Runs integration tests with Docker Compose"
     group = "verification"
 
     testClassesDirs = sourceSets["test"].output.classesDirs
@@ -105,7 +105,6 @@ val integrationTest by tasks.registering(Test::class) {
         includeTags("integration-test")
     }
 
-    // K3s 시작 시간 고려하여 타임아웃 증가
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
