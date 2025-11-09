@@ -88,21 +88,21 @@ tasks.withType<Test> {
 // 기본 test 태스크만 특정 태그 제외
 tasks.test {
     useJUnitPlatform {
-        // K8s 통합 테스트와 E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
-        excludeTags("k8s-integration-test", "e2e-test")
+        // 통합 테스트와 E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
+        excludeTags("integration-test", "e2e-test")
     }
 }
 
-// K8s 통합 테스트 전용 태스크
-val k8sIntegrationTest by tasks.registering(Test::class) {
-    description = "Runs K8s integration tests (K3s)"
+// 통합 테스트 전용 태스크 (K8s 기반)
+val integrationTest by tasks.registering(Test::class) {
+    description = "Runs integration tests with K8s (K3s)"
     group = "verification"
 
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
 
     useJUnitPlatform {
-        includeTags("k8s-integration-test")
+        includeTags("integration-test")
     }
 
     // K3s 시작 시간 고려하여 타임아웃 증가

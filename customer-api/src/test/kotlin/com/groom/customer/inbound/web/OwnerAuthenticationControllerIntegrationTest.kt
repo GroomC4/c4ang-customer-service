@@ -5,8 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.groom.customer.application.dto.RegisterOwnerCommand
 import com.groom.customer.application.service.RegisterOwnerService
+import com.groom.customer.common.AbstractIntegrationTest
 import com.groom.customer.common.TransactionApplier
-import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.inbound.web.dto.LoginRequest
 import com.groom.customer.inbound.web.dto.RegisterOwnerRequest
 import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -32,10 +31,8 @@ import java.util.Date
 import java.util.UUID
 
 @DisplayName("판매자 인증 컨트롤러 통합 테스트")
-@IntegrationTest
-@SpringBootTest
 @AutoConfigureMockMvc
-class OwnerAuthenticationControllerIntegrationTest {
+class OwnerAuthenticationControllerIntegrationTest : AbstractIntegrationTest() {
     @Autowired
     private lateinit var mockMvc: MockMvc
 

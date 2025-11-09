@@ -6,8 +6,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-@Profile("test")
-@ActiveProfiles("test")
+@Profile("test", "k8s-test")
 class TransactionApplier {
     @Transactional
     fun <T> applyPrimaryTransaction(doSomething: () -> T) = doSomething()

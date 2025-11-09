@@ -13,7 +13,7 @@ import java.util.UUID
 class RefreshToken(
     @Column(nullable = false, unique = true, name = "user_id")
     val userId: UUID,
-    @Column(nullable = true)
+    @Column(nullable = true, columnDefinition = "TEXT")
     var token: String?,
     @Column(name = "client_ip")
     val clientIp: String?,

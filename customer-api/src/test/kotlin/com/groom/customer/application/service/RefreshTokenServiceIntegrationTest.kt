@@ -3,8 +3,8 @@ package com.groom.customer.application.service
 import com.groom.customer.application.dto.LoginCommand
 import com.groom.customer.application.dto.RefreshTokenCommand
 import com.groom.customer.application.dto.RegisterCustomerCommand
+import com.groom.customer.common.AbstractIntegrationTest
 import com.groom.customer.common.TransactionApplier
-import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.common.exception.RefreshTokenException
 import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
 import com.groom.customer.outbound.repository.UserRepositoryImpl
@@ -16,12 +16,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 
 @DisplayName("Refresh Token 서비스 통합 테스트")
-@IntegrationTest
-@SpringBootTest
-class RefreshTokenServiceIntegrationTest {
+class RefreshTokenServiceIntegrationTest : AbstractIntegrationTest() {
     @Autowired
     private lateinit var refreshTokenService: RefreshTokenService
 

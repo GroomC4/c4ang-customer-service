@@ -10,7 +10,7 @@ import java.util.UUID
  * 테스트 환경 전용 StorePolicy 구현체
  */
 @Component
-@Profile("test")
+@Profile("test", "k8s-test")
 @Primary
 class NoOpsStorePolicy : StorePolicy {
     override fun checkStoreAlreadyExists(id: UUID) {
