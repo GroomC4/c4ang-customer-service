@@ -18,7 +18,7 @@ import javax.sql.DataSource
 @Profile("!test")
 @Configuration
 @EnableJpaRepositories(
-    basePackages = ["com.groom.ecommerce"],
+    basePackages = ["com.groom.customer"],
     repositoryImplementationPostfix = "RepositoryImpl",
     entityManagerFactoryRef = "entityManagerFactory",
     transactionManagerRef = "transactionManager",
@@ -36,7 +36,7 @@ class JpaConfig {
     ): LocalContainerEntityManagerFactoryBean =
         LocalContainerEntityManagerFactoryBean().apply {
             this.dataSource = dataSource
-            this.setPackagesToScan("com.groom.ecommerce")
+            this.setPackagesToScan("com.groom.customer")
             this.jpaVendorAdapter =
                 HibernateJpaVendorAdapter().apply {
                     setDatabase(Database.POSTGRESQL)
