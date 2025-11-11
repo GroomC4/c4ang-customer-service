@@ -31,9 +31,6 @@ class SignupIntegrationTest {
     @Autowired
     private lateinit var userRepository: UserRepositoryImpl
 
-//    @Autowired
-//    private lateinit var storeRepository: StoreRepositoryImpl
-
     // 각 테스트에서 생성한 이메일 목록을 추적
     private val createdEmails = mutableListOf<String>()
 
@@ -103,11 +100,6 @@ class SignupIntegrationTest {
                 email = "shared@example.com", // 동일 이메일
                 password = "password123!",
                 phoneNumber = "010-2222-2222",
-                storeInfo =
-                    RegisterOwnerRequest.StoreInfo(
-                        name = "공유 스토어",
-                        description = "동일 이메일 테스트",
-                    ),
             )
 
         // when & then - OWNER 가입도 성공해야 함

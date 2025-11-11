@@ -12,8 +12,6 @@ import java.time.LocalDateTime
 data class RegisterOwnerResponse(
     @Schema(description = "사용자 정보")
     val user: UserInfo,
-    @Schema(description = "스토어 정보")
-    val store: StoreInfo,
     @Schema(description = "생성일시", example = "2025-01-15T10:30:00")
     val createdAt: LocalDateTime,
 ) {
@@ -27,14 +25,6 @@ data class RegisterOwnerResponse(
         val email: String,
     )
 
-    @Schema(description = "스토어 정보")
-    data class StoreInfo(
-        @Schema(description = "스토어 ID", example = "223e4567-e89b-12d3-a456-426614174001")
-        val id: String,
-        @Schema(description = "스토어명", example = "김판매의 스토어")
-        val name: String,
-    )
-
     companion object {
         fun from(result: RegisterOwnerResult): RegisterOwnerResponse =
             RegisterOwnerResponse(
@@ -43,11 +33,6 @@ data class RegisterOwnerResponse(
                         id = result.userId,
                         name = result.username,
                         email = result.email,
-                    ),
-                store =
-                    StoreInfo(
-                        id = result.storeId,
-                        name = result.storeName,
                     ),
                 createdAt = result.createdAt,
             )
