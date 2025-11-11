@@ -1,12 +1,12 @@
 spring:
   datasource:
     master:
-      url: jdbc:postgresql://localhost:15432/groom
+      url: jdbc:postgresql://c4ang-rdb-primary:15432/groom
       username: application
       password: application
       driver-class-name: org.postgresql.Driver
     replica:
-      url: jdbc:postgresql://localhost:15433/groom
+      url: jdbc:postgresql://c4ang-rdb-replica:15433/groom
       username: application
       password: application
       driver-class-name: org.postgresql.Driver

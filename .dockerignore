@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.gitmodules
+
+# IDE
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+
+# Build output
+build
+**/build
+target
+**/target
+out
+**/out
+
+# Gradle
+.gradle
+**/gradle/wrapper/*.jar
+
+# Logs
+*.log
+logs
+**/logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+README.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Test
+**/test
+**/*Test.kt
+**/*Test.java
+
+# Infra
+c4ang-infra
+
+# Misc
+*.swp
+*.swo
+*~
