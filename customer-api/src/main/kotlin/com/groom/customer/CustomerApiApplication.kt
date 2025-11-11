@@ -12,8 +12,8 @@ import org.springframework.scheduling.annotation.EnableAsync
 @EnableAsync
 @EnableRetry
 @EnableFeignClients
-class EcommerceServiceApiApplication
+class CustomerServiceApiApplication
 
 fun main(args: Array<String>) {
-    runApplication<EcommerceServiceApiApplication>(*args)
+    runApplication<CustomerServiceApiApplication>(*args)
 }
