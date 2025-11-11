@@ -260,8 +260,6 @@ class TokenRefreshControllerIntegrationTest {
                     email = "ownerrelogin@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-7777-6666",
-                    storeName = "재로그인 테스트 스토어",
-                    storeDescription = "재로그인 테스트 스토어 설명",
                 )
             trackEmail(registerCommand.email)
 
