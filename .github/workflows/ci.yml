@@ -69,7 +69,7 @@ jobs:
       - name: Trigger CD workflow
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
           event-type: ci-passed
           client-payload: |
             {
