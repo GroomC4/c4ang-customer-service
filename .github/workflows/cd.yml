@@ -1,8 +1,14 @@
 name: CD
 
 on:
-  repository_dispatch:
-    types: [ci-passed]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches:
+      - main
+      - develop
+      - 'release/**'
+      - 'feature/**'
 
 env:
   AWS_REGION: ap-northeast-2
@@ -12,6 +18,10 @@ jobs:
   build-and-push:
     name: Build and Push to ECR
     runs-on: ubuntu-latest
+    # Only run if CI workflow succeeded and was triggered by a tag push
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
 
     permissions:
       id-token: write
@@ -21,6 +31,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           submodules: 'recursive'
           token: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
 
@@ -37,8 +48,8 @@ jobs:
       - name: Extract metadata for Docker
         id: meta
         run: |
-          TAG_NAME=${{ github.event.client_payload.tag }}
-          SHORT_SHA=$(echo ${{ github.event.client_payload.sha }} | cut -c1-7)
+          TAG_NAME=${{ github.event.workflow_run.head_branch }}
+          SHORT_SHA=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
           # Generate tags
