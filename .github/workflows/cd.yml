@@ -21,8 +21,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.client_payload.sha }}
-          submodules: recursive
+          submodules: 'recursive'
+          token: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
