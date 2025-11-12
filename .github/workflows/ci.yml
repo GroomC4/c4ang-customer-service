@@ -60,4 +60,7 @@ jobs:
     name: Push Docker Image to ECR
     needs: continuous-integration
     if: success() && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      id-token: write
+      contents: read
     uses: GroomC4/c4ang-platform-core/.github/workflows/reusable-ecr-push.yml@v1.0.0
