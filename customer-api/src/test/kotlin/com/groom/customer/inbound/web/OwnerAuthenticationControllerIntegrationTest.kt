@@ -48,9 +48,6 @@ class OwnerAuthenticationControllerIntegrationTest {
     @Autowired
     private lateinit var userRepository: UserRepositoryImpl
 
-//    @Autowired
-//    private lateinit var storeRepository: StoreRepositoryImpl
-
     @Autowired
     private lateinit var refreshTokenRepository: RefreshTokenRepositoryImpl
 
@@ -75,9 +72,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     refreshTokenRepository.findByUserId(user.id).ifPresent { token ->
                         refreshTokenRepository.delete(token)
                     }
-//                    storeRepository.findByOwnerUserId(user.id).ifPresent { store ->
-//                        storeRepository.delete(store)
-//                    }
                     userRepository.delete(user)
                 }
             }
@@ -101,8 +95,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "owner@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-1111-2222",
-                    storeName = "테스트 스토어",
-                    storeDescription = "테스트 스토어 설명",
                 )
             trackEmail(registerCommand.email)
 
@@ -160,8 +152,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "ownerwrongpwd@example.com",
                     rawPassword = "correctPassword123!",
                     phoneNumber = "010-3333-4444",
-                    storeName = "테스트 스토어2",
-                    storeDescription = "테스트 스토어 설명2",
                 )
             trackEmail(registerCommand.email)
 
@@ -217,8 +207,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "logoutowner@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-9999-0000",
-                    storeName = "로그아웃 테스트 스토어",
-                    storeDescription = "로그아웃 테스트 스토어 설명",
                 )
             trackEmail(registerCommand.email)
 
@@ -275,8 +263,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "expiredowner@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-1234-5678",
-                    storeName = "만료토큰 스토어",
-                    storeDescription = "만료토큰 테스트",
                 )
             trackEmail(registerCommand.email)
 
@@ -321,8 +307,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "tamperroleowner@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-2345-6789",
-                    storeName = "Role변조 스토어",
-                    storeDescription = "Role변조 테스트",
                 )
             trackEmail(registerCommand.email)
 
@@ -388,8 +372,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "invalidsigowner@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-3456-7890",
-                    storeName = "잘못된서명 스토어",
-                    storeDescription = "잘못된서명 테스트",
                 )
             trackEmail(registerCommand.email)
 
@@ -435,8 +417,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "invalidissuerowner@example.com",
                     rawPassword = "password123!",
                     phoneNumber = "010-4567-8901",
-                    storeName = "잘못된발급자 스토어",
-                    storeDescription = "잘못된발급자 테스트",
                 )
             trackEmail(registerCommand.email)
 
@@ -486,11 +466,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "owner@example.com",
                     password = "P@ssw0rd!",
                     phoneNumber = "010-9999-9999",
-                    storeInfo =
-                        RegisterOwnerRequest.StoreInfo(
-                            name = "테크 스토어",
-                            description = "최신 전자제품 판매",
-                        ),
                 )
             trackEmail(request.email)
 
@@ -519,11 +494,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "storeowner@example.com",
                     password = "password123!",
                     phoneNumber = "010-8888-8888",
-                    storeInfo =
-                        RegisterOwnerRequest.StoreInfo(
-                            name = "패션 스토어",
-                            description = "최신 패션 아이템",
-                        ),
                 )
             trackEmail(request.email)
 
@@ -562,11 +532,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "duplicate@example.com",
                     password = "password123!",
                     phoneNumber = "010-7777-7777",
-                    storeInfo =
-                        RegisterOwnerRequest.StoreInfo(
-                            name = "첫번째 스토어",
-                            description = null,
-                        ),
                 )
             trackEmail(firstRequest.email)
 
@@ -585,11 +550,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "duplicate@example.com", // 동일 이메일
                     password = "different123!",
                     phoneNumber = "010-6666-6666",
-                    storeInfo =
-                        RegisterOwnerRequest.StoreInfo(
-                            name = "두번째 스토어",
-                            description = null,
-                        ),
                 )
 
             // when & then
@@ -613,11 +573,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     email = "invalid-email-format", // 잘못된 형식
                     password = "password123!",
                     phoneNumber = "010-5555-5555",
-                    storeInfo =
-                        RegisterOwnerRequest.StoreInfo(
-                            name = "테스트 스토어",
-                            description = null,
-                        ),
                 )
 
             // when & then
