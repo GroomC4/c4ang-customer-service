@@ -63,4 +63,5 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    secrets: inherit
     uses: GroomC4/c4ang-platform-core/.github/workflows/reusable-ecr-push.yml@v1.0.0
