@@ -9,7 +9,7 @@ plugins {
 sourceSets {
     test {
         kotlin {
-            srcDir("../c4ang-infra/testcontainers/kotlin")
+            srcDir("../c4ang-platform-core/testcontainers/kotlin")
         }
     }
 }
@@ -61,9 +61,6 @@ dependencies {
     testImplementation("org.testcontainers:k3s:1.19.7")
     testImplementation("io.fabric8:kubernetes-client:6.10.0")
     testImplementation("org.bouncycastle:bcpkix-jdk18on:1.78")
-
-    // Karate DSL for E2E Testing
-    testImplementation("com.intuit.karate:karate-junit5:1.4.1")
 }
 
 // 모든 Test 태스크에 공통 설정 적용
@@ -85,11 +82,8 @@ tasks.withType<Test> {
     }
 }
 
-// 기본 test 태스크만 특정 태그 제외
 tasks.test {
     useJUnitPlatform {
-        // 통합 테스트와 E2E 테스트는 기본 test 태스크에서 제외 (별도 태스크로 실행)
-        excludeTags("integration-test", "e2e-test")
     }
 }
 
@@ -108,32 +102,6 @@ val integrationTest by tasks.registering(Test::class) {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-    }
-
-    shouldRunAfter(tasks.test)
-}
-
-// E2E 테스트 전용 태스크
-val e2eTest by tasks.registering(Test::class) {
-    description = "Runs E2E tests (Karate scenarios)"
-    group = "verification"
-
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
-
-    useJUnitPlatform {
-        includeTags("e2e-test")
-    }
-
-    systemProperty("user.timezone", "KST")
-    jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
-
-    testLogging {
-        events("passed", "skipped", "failed")
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
     }
 
     shouldRunAfter(tasks.test)

@@ -457,7 +457,7 @@ class OwnerAuthenticationControllerIntegrationTest {
     @DisplayName("판매자 회원가입 API 테스트")
     inner class OwnerSignupTests {
         @Test
-        @DisplayName("POST /api/v1/auth/owners/signup - 정상적인 판매자 회원가입 요청 시 201 Created와 판매자 정보 및 스토어 정보를 반환한다")
+        @DisplayName("POST /api/v1/auth/owners/signup - 정상적인 판매자 회원가입 요청 시 201 Created와 판매자 정보를 반환한다")
         fun testSuccessfulSignup() {
             // given
             val request =
@@ -479,13 +479,11 @@ class OwnerAuthenticationControllerIntegrationTest {
                 .andExpect(jsonPath("$.user.id").exists())
                 .andExpect(jsonPath("$.user.name").value("판매자김"))
                 .andExpect(jsonPath("$.user.email").value("owner@example.com"))
-                .andExpect(jsonPath("$.store.id").exists())
-                .andExpect(jsonPath("$.store.name").value("테크 스토어"))
                 .andExpect(jsonPath("$.createdAt").exists())
         }
 
         @Test
-        @DisplayName("POST /api/v1/auth/owners/signup - 판매자 회원가입 성공 시 DB에 User, UserProfile, Store, StoreRating이 모두 저장된다")
+        @DisplayName("POST /api/v1/auth/owners/signup - 판매자 회원가입 성공 시 DB에 User와 UserProfile이 모두 저장된다")
         fun testSignupSavesAllEntities() {
             // given
             val request =
