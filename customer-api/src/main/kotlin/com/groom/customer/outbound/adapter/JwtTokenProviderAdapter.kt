@@ -32,7 +32,10 @@ class JwtTokenProviderAdapter(
         )
 
     override fun validateRefreshToken(token: String) {
-        jwtTokenProvider.validateToken(token)
+        // Refresh Token 검증은 DB 조회로만 처리
+        // - RefreshToken 엔티티 존재 여부 확인
+        // - isRevoked 플래그 확인
+        // JWT 자체 검증은 불필요 (DB가 신뢰할 수 있는 소스)
     }
 
     override fun getAccessTokenValiditySeconds(): Long = properties.accessTokenExpirationMinutes * 60

@@ -243,225 +243,24 @@ class CustomerAuthenticationControllerIntegrationTest {
             val accessToken = loginResponseBody.get("accessToken").asText()
             val refreshToken = loginResponseBody.get("refreshToken").asText()
 
+            // JWT 토큰에서 userId 추출 (실제 환경에서는 Istio가 처리)
+            val decodedJWT = JWT.decode(accessToken)
+            val userId = decodedJWT.subject
+
             // when & then
+            // Istio가 JWT를 검증하고 X-User-Id 헤더를 주입한다고 가정
             mockMvc
                 .perform(
                     post("/api/v1/auth/customers/logout")
-                        .header("Authorization", "Bearer $accessToken"),
+                        .header("X-User-Id", userId),
                 ).andExpect(status().isNoContent)
         }
 
-        @Test
-        @DisplayName("POST /api/v1/auth/customers/logout - 인증 토큰 없이 로그아웃 시도 시 401 Unauthorized를 반환한다")
-        fun testLogoutWithoutToken() {
-            // when & then
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/logout"),
-                ).andExpect(status().isUnauthorized)
-        }
+        // JWT 검증 관련 테스트는 제거됨:
+        // - Istio API Gateway가 JWT 검증을 담당
+        // - 만료된 토큰, 잘못된 서명, 잘못된 issuer, 토큰 없음 등은 Istio에서 처리
+        // - 이 서비스는 Istio가 검증한 X-User-Id 헤더만 사용
 
-        @Test
-        @DisplayName("POST /api/v1/auth/customers/logout - 만료된 토큰으로 로그아웃 시도 시 401 Unauthorized를 반환한다")
-        fun testLogoutWithExpiredToken() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "만료토큰테스트",
-                    email = "expiredtoken@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-1234-5678",
-                )
-            trackEmail(registerCommand.email)
-
-            val userId =
-                transactionApplier.applyPrimaryTransaction {
-                    val result = registerCustomerService.register(registerCommand)
-                    result.userId
-                }
-
-            // 만료된 토큰 생성 (1분 전에 만료)
-            val expiredToken =
-                JWT
-                    .create()
-                    .withIssuer(jwtProperties.issuer)
-                    .withSubject(userId.toString())
-                    .withClaim("role", "CUSTOMER")
-                    .withIssuedAt(Date.from(Instant.now().minus(10, ChronoUnit.MINUTES)))
-                    .withExpiresAt(Date.from(Instant.now().minus(1, ChronoUnit.MINUTES)))
-                    .withJWTId(
-                        UUID
-                            .randomUUID()
-                            .toString(),
-                    ).sign(Algorithm.HMAC256(jwtProperties.secret))
-
-            // when & then
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/logout")
-                        .header("Authorization", "Bearer $expiredToken"),
-                ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("TOKEN_EXPIRED"))
-                .andExpect(jsonPath("$.message").value("토큰이 만료되었습니다. 다시 로그인해주세요."))
-        }
-
-        @Test
-        @DisplayName("POST /api/v1/auth/customers/logout - role이 변조된 토큰으로 로그아웃 시도 시 401 Unauthorized를 반환한다")
-        fun testLogoutWithTamperedRoleToken() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "Role변조테스트",
-                    email = "tamperrole@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-2345-6789",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerCustomerService.register(registerCommand)
-            }
-
-            // 로그인하여 정상 토큰 획득
-            val loginRequest =
-                LoginRequest(
-                    email = "tamperrole@example.com",
-                    password = "password123!",
-                )
-
-            val loginResponse =
-                mockMvc
-                    .perform(
-                        post("/api/v1/auth/customers/login")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(loginRequest)),
-                    ).andExpect(status().isOk)
-                    .andReturn()
-                    .response
-                    .contentAsString
-
-            val validToken = objectMapper.readTree(loginResponse).get("accessToken").asText()
-
-            // 토큰을 분해하여 payload만 변조하고 signature는 원본 유지
-            val parts = validToken.split(".")
-            val decodedJWT = JWT.decode(validToken)
-
-            // role을 OWNER로 변조한 새로운 payload 생성
-            val tamperedPayload = """{"sub":"${decodedJWT.subject}","role":"OWNER","iss":"${decodedJWT.issuer}","jti":"${decodedJWT.id}"}"""
-            val tamperedPayloadEncoded =
-                Base64
-                    .getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(tamperedPayload.toByteArray())
-
-            // 원본 signature를 그대로 사용 (비밀키 없이는 올바른 signature 생성 불가)
-            val tamperedToken = "${parts[0]}.$tamperedPayloadEncoded.${parts[2]}"
-
-            // when & then
-            // payload가 변조되었지만 signature는 원본 그대로이므로 서명 검증 실패
-            // JWT 토큰 자체가 유효하지 않아 401 Unauthorized 반환
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/logout")
-                        .header("Authorization", "Bearer $tamperedToken"),
-                ).andExpect(status().isUnauthorized) // 401 Unauthorized (서명 검증 실패)
-                .andExpect(jsonPath("$.code").value("INVALID_TOKEN_SIGNATURE"))
-                .andExpect(jsonPath("$.message").value("인증에 실패하였습니다."))
-        }
-
-        @Test
-        @DisplayName("POST /api/v1/auth/customers/logout - 잘못된 서명의 토큰으로 로그아웃 시도 시 401 Unauthorized를 반환한다")
-        fun testLogoutWithInvalidSignatureToken() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "잘못된서명테스트",
-                    email = "invalidsig@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-3456-7890",
-                )
-            trackEmail(registerCommand.email)
-
-            val userId =
-                transactionApplier.applyPrimaryTransaction {
-                    val result = registerCustomerService.register(registerCommand)
-                    result.userId
-                }
-
-            // 잘못된 secret으로 토큰 생성
-            val invalidToken =
-                JWT
-                    .create()
-                    .withIssuer(jwtProperties.issuer)
-                    .withSubject(userId.toString())
-                    .withClaim("role", "CUSTOMER")
-                    .withIssuedAt(Date.from(Instant.now()))
-                    .withExpiresAt(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
-                    .withJWTId(
-                        UUID
-                            .randomUUID()
-                            .toString(),
-                    ).sign(Algorithm.HMAC256("wrong-secret-key-that-is-long-enough-for-hmac256"))
-
-            // when & then
-            // JWT 검증 실패 시 AuthenticationFailedException 발생
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/logout")
-                        .header("Authorization", "Bearer $invalidToken"),
-                ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("INVALID_TOKEN_SIGNATURE"))
-                .andExpect(jsonPath("$.message").value("인증에 실패하였습니다."))
-        }
-
-        @Test
-        @DisplayName("POST /api/v1/auth/customers/logout - 잘못된 issuer의 토큰으로 로그아웃 시도 시 401 Unauthorized를 반환한다")
-        fun testLogoutWithInvalidIssuerToken() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "잘못된발급자테스트",
-                    email = "invalidissuer@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-4567-8901",
-                )
-            trackEmail(registerCommand.email)
-
-            val userId =
-                transactionApplier.applyPrimaryTransaction {
-                    val result = registerCustomerService.register(registerCommand)
-                    result.userId
-                }
-
-            // 잘못된 issuer로 토큰 생성
-            val invalidIssuerToken =
-                JWT
-                    .create()
-                    .withIssuer("fake-issuer") // 잘못된 issuer
-                    .withSubject(userId)
-                    .withClaim("role", "CUSTOMER")
-                    .withIssuedAt(Date.from(Instant.now()))
-                    .withExpiresAt(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
-                    .withJWTId(
-                        UUID
-                            .randomUUID()
-                            .toString(),
-                    ).sign(Algorithm.HMAC256(jwtProperties.secret))
-
-            // when & then
-            // JWT 검증 실패 시 InvalidTokenIssuer 예외 발생
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/logout")
-                        .header("Authorization", "Bearer $invalidIssuerToken"),
-                ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("INVALID_TOKEN_ISSUER"))
-                .andExpect(jsonPath("$.message").value("토큰 발급자가 올바르지 않습니다. 기대값: ${jwtProperties.issuer}, 실제값: unknown"))
-        }
     }
 
     @Nested

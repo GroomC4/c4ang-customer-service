@@ -7,19 +7,19 @@ import com.groom.customer.inbound.web.dto.LoginRequest
 import com.groom.customer.inbound.web.dto.LoginResponse
 import com.groom.customer.inbound.web.dto.SignupCustomerRequest
 import com.groom.customer.inbound.web.dto.SignupCustomerResponse
-import com.groom.customer.security.AuthenticationContext
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @Tag(name = "Customer Authentication", description = "고객 인증 관리 API")
 @RestController
@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController
 class CustomerAuthenticationController(
     private val customerAuthenticationService: CustomerAuthenticationService,
     private val registerCustomerService: RegisterCustomerService,
-    private val authenticationContext: AuthenticationContext,
 ) {
     @Operation(summary = "고객 회원가입", description = "새로운 고객 계정을 생성합니다.")
     @ApiResponses(
@@ -95,10 +94,11 @@ class CustomerAuthenticationController(
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/logout")
-    @PreAuthorize("hasRole('CUSTOMER')") // CUSTOMER 역할만 접근 가능
-    fun logout() {
-        // JWT 토큰에서 사용자 ID 추출
-        val userId = authenticationContext.getCurrentUserId()
+    fun logout(
+        @RequestHeader("X-User-Id") userIdHeader: String,
+    ) {
+        // Istio가 JWT 검증 후 주입한 헤더에서 사용자 ID 추출
+        val userId = UUID.fromString(userIdHeader)
         customerAuthenticationService.logout(LogoutCommand(userId))
     }
 }

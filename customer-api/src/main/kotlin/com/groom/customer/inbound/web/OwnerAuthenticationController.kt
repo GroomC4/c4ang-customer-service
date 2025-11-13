@@ -7,19 +7,19 @@ import com.groom.customer.inbound.web.dto.LoginRequest
 import com.groom.customer.inbound.web.dto.LoginResponse
 import com.groom.customer.inbound.web.dto.RegisterOwnerRequest
 import com.groom.customer.inbound.web.dto.RegisterOwnerResponse
-import com.groom.customer.security.AuthenticationContext
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @Tag(name = "Owner Authentication", description = "판매자 인증 관리 API")
 @RestController
@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController
 class OwnerAuthenticationController(
     private val ownerAuthenticationService: OwnerAuthenticationService,
     private val registerOwnerService: RegisterOwnerService,
-    private val authenticationContext: AuthenticationContext,
 ) {
     @Operation(summary = "판매자 회원가입", description = "새로운 판매자 계정과 스토어를 생성합니다.")
     @ApiResponses(
@@ -95,10 +94,11 @@ class OwnerAuthenticationController(
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/logout")
-    @PreAuthorize("hasRole('OWNER')") // OWNER 역할만 접근 가능
-    fun logout() {
-        // JWT 토큰에서 사용자 ID 추출
-        val userId = authenticationContext.getCurrentUserId()
+    fun logout(
+        @RequestHeader("X-User-Id") userIdHeader: String,
+    ) {
+        // Istio가 JWT 검증 후 주입한 헤더에서 사용자 ID 추출
+        val userId = UUID.fromString(userIdHeader)
         ownerAuthenticationService.logout(LogoutCommand(userId))
     }
 }
