@@ -3,7 +3,7 @@ package com.groom.customer.common.annotation
 import com.groom.customer.common.extension.CustomerServiceContainerExtension
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.boot.test.context.SpringBootTest
-import com.groom.infra.testcontainers.IntegrationTest as BaseIntegrationTest
+import com.groom.platform.testSupport.IntegrationTest as BaseIntegrationTest
 
 /**
  * Customer Service 통합 테스트용 어노테이션

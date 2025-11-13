@@ -9,7 +9,7 @@ plugins {
 sourceSets {
     test {
         kotlin {
-            srcDir("../c4ang-infra/testcontainers/kotlin")
+            srcDir("../c4ang-platform-core/testcontainers/kotlin")
         }
     }
 }

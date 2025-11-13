@@ -1,6 +1,6 @@
 package com.groom.customer.common.config
 
-import com.groom.infra.testcontainers.BaseContainerExtension
+import com.groom.platform.testSupport.BaseContainerExtension
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
