@@ -29,11 +29,12 @@ class IstioHeaderExtractor {
      * @throws IllegalStateException 헤더가 없거나 형식이 잘못된 경우
      */
     fun extractUserId(request: HttpServletRequest): UUID {
-        val userId = request.getHeader(USER_ID_HEADER)
-            ?: throw IllegalStateException(
-                "$USER_ID_HEADER header not found. " +
-                    "Request must pass through Istio API Gateway with valid JWT authentication."
-            )
+        val userId =
+            request.getHeader(USER_ID_HEADER)
+                ?: throw IllegalStateException(
+                    "$USER_ID_HEADER header not found. " +
+                        "Request must pass through Istio API Gateway with valid JWT authentication.",
+                )
 
         return try {
             UUID.fromString(userId)
@@ -49,13 +50,12 @@ class IstioHeaderExtractor {
      * @return 사용자 역할 (예: "CUSTOMER", "OWNER")
      * @throws IllegalStateException 헤더가 없는 경우
      */
-    fun extractUserRole(request: HttpServletRequest): String {
-        return request.getHeader(USER_ROLE_HEADER)
+    fun extractUserRole(request: HttpServletRequest): String =
+        request.getHeader(USER_ROLE_HEADER)
             ?: throw IllegalStateException(
                 "$USER_ROLE_HEADER header not found. " +
-                    "Request must pass through Istio API Gateway with valid JWT authentication."
+                    "Request must pass through Istio API Gateway with valid JWT authentication.",
             )
-    }
 
     /**
      * 사용자 ID와 역할을 함께 추출합니다.
