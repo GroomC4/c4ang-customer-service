@@ -3,20 +3,11 @@ package com.groom.customer.inbound.web
 import com.auth0.jwt.JWT
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.groom.customer.application.dto.LoginCommand
-import com.groom.customer.application.dto.RegisterCustomerCommand
-import com.groom.customer.application.dto.RegisterOwnerCommand
 import com.groom.customer.application.service.CustomerAuthenticationService
 import com.groom.customer.application.service.OwnerAuthenticationService
-import com.groom.customer.application.service.RegisterCustomerService
-import com.groom.customer.application.service.RegisterOwnerService
-import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.inbound.web.dto.RefreshTokenRequest
-import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
-import com.groom.customer.outbound.repository.UserRepositoryImpl
 import com.groom.customer.security.jwt.JwtProperties
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -24,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
+import org.springframework.test.context.jdbc.SqlGroup
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -33,6 +26,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @IntegrationTest
 @SpringBootTest
 @AutoConfigureMockMvc
+@SqlGroup(
+    Sql(scripts = ["/sql/integration/token-refresh-test-data.sql"], executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+    Sql(scripts = ["/sql/integration/cleanup.sql"], executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+)
 class TokenRefreshControllerIntegrationTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -41,59 +38,13 @@ class TokenRefreshControllerIntegrationTest {
     private lateinit var objectMapper: ObjectMapper
 
     @Autowired
-    private lateinit var registerCustomerService: RegisterCustomerService
-
-    @Autowired
-    private lateinit var registerOwnerService: RegisterOwnerService
-
-    @Autowired
     private lateinit var customerLoginService: CustomerAuthenticationService
 
     @Autowired
     private lateinit var ownerLoginService: OwnerAuthenticationService
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
-
-//    @Autowired
-//    private lateinit var storeRepository: StoreRepositoryImpl
-
-    @Autowired
-    private lateinit var refreshTokenRepository: RefreshTokenRepositoryImpl
-
-    @Autowired
-    private lateinit var transactionApplier: TransactionApplier
-
-    @Autowired
     private lateinit var jwtProperties: JwtProperties
-
-    private val createdEmails = mutableListOf<String>()
-
-    @BeforeEach
-    fun setUp() {
-        createdEmails.clear()
-    }
-
-    @AfterEach
-    fun tearDown() {
-        transactionApplier.applyPrimaryTransaction {
-            createdEmails.forEach { email ->
-                userRepository.findByEmail(email).ifPresent { user ->
-                    refreshTokenRepository.findByUserId(user.id).ifPresent { token ->
-                        refreshTokenRepository.delete(token)
-                    }
-//                    storeRepository.findByOwnerUserId(user.id).ifPresent { store ->
-//                        storeRepository.delete(store)
-//                    }
-                    userRepository.delete(user)
-                }
-            }
-        }
-    }
-
-    private fun trackEmail(email: String) {
-        createdEmails.add(email)
-    }
 
     @Nested
     @DisplayName("Refresh Token API 테스트")
@@ -101,18 +52,8 @@ class TokenRefreshControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/refresh - 유효한 Refresh Token으로 요청 시 200 OK와 새로운 Access Token을 반환한다")
         fun testSuccessfulRefresh() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "토큰갱신테스트",
-                    email = "refreshtoken@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 송파구",
-                    defaultPhoneNumber = "010-5555-6666",
-                )
-            trackEmail(registerCommand.email)
-
-            registerCustomerService.register(registerCommand)
+            // given - SQL로 사용자 데이터 준비됨
+            // 로그인하여 토큰 획득
             val loginCommand =
                 LoginCommand(
                     email = "refreshtoken@example.com",
@@ -155,19 +96,8 @@ class TokenRefreshControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/refresh - 존재하지 않는 Refresh Token으로 요청 시 401 Unauthorized를 반환한다")
         fun testRefreshWithInvalidToken() {
-            // given
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "토큰갱신테스트",
-                    email = "refreshtoken@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 송파구",
-                    defaultPhoneNumber = "010-5555-6666",
-                )
-            trackEmail(registerCommand.email)
-
-            registerCustomerService.register(registerCommand)
+            // given - SQL로 사용자 데이터 준비됨
+            // 로그인하여 토큰 획득
             val loginCommand =
                 LoginCommand(
                     email = "refreshtoken@example.com",
@@ -193,19 +123,7 @@ class TokenRefreshControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/refresh - 재로그인 시 이전 Refresh Token이 무효화되어 갱신에 실패한다")
         fun testPreviousRefreshTokenInvalidatedAfterReLogin() {
-            // given: 사용자 등록
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "재로그인테스트",
-                    email = "relogin@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-9999-8888",
-                )
-            trackEmail(registerCommand.email)
-
-            registerCustomerService.register(registerCommand)
-
+            // given - SQL로 사용자 데이터 준비됨
             val loginCommand =
                 LoginCommand(
                     email = "relogin@example.com",
@@ -253,17 +171,7 @@ class TokenRefreshControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/refresh - 판매자 재로그인 시 이전 Refresh Token이 무효화되어 갱신에 실패한다")
         fun testOwnerPreviousRefreshTokenInvalidatedAfterReLogin() {
-            // given: 판매자 등록
-            val registerCommand =
-                RegisterOwnerCommand(
-                    username = "판매자재로그인테스트",
-                    email = "ownerrelogin@example.com",
-                    rawPassword = "password123!",
-                    phoneNumber = "010-7777-6666",
-                )
-            trackEmail(registerCommand.email)
-
-            registerOwnerService.register(registerCommand)
+            // given - SQL로 사용자 데이터 준비됨
             val loginCommand =
                 LoginCommand(
                     email = "ownerrelogin@example.com",

@@ -1,20 +1,13 @@
 package com.groom.customer.inbound.web
 
 import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.groom.customer.application.dto.RegisterCustomerCommand
 import com.groom.customer.application.service.CustomerAuthenticationService
-import com.groom.customer.application.service.RegisterCustomerService
-import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.inbound.web.dto.LoginRequest
 import com.groom.customer.inbound.web.dto.SignupCustomerRequest
-import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
 import com.groom.customer.outbound.repository.UserRepositoryImpl
 import com.groom.customer.security.jwt.JwtProperties
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -22,20 +15,21 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
+import org.springframework.test.context.jdbc.SqlGroup
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.Base64
-import java.util.Date
-import java.util.UUID
 
 @DisplayName("일반 고객 인증 컨트롤러 통합 테스트")
 @IntegrationTest
 @SpringBootTest
 @AutoConfigureMockMvc
+@SqlGroup(
+    Sql(scripts = ["/sql/integration/customer-auth-test-data.sql"], executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+    Sql(scripts = ["/sql/integration/cleanup.sql"], executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+)
 class CustomerAuthenticationControllerIntegrationTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -44,47 +38,13 @@ class CustomerAuthenticationControllerIntegrationTest {
     private lateinit var objectMapper: ObjectMapper
 
     @Autowired
-    private lateinit var registerCustomerService: RegisterCustomerService
-
-    @Autowired
     private lateinit var customerLoginService: CustomerAuthenticationService
 
     @Autowired
     private lateinit var userRepository: UserRepositoryImpl
 
     @Autowired
-    private lateinit var refreshTokenRepository: RefreshTokenRepositoryImpl
-
-    @Autowired
-    private lateinit var transactionApplier: TransactionApplier
-
-    @Autowired
     private lateinit var jwtProperties: JwtProperties
-
-    private val createdEmails = mutableListOf<String>()
-
-    @BeforeEach
-    fun setUp() {
-        createdEmails.clear()
-    }
-
-    @AfterEach
-    fun tearDown() {
-        transactionApplier.applyPrimaryTransaction {
-            createdEmails.forEach { email ->
-                userRepository.findByEmail(email).ifPresent { user ->
-                    refreshTokenRepository.findByUserId(user.id).ifPresent { token ->
-                        refreshTokenRepository.delete(token)
-                    }
-                    userRepository.delete(user)
-                }
-            }
-        }
-    }
-
-    private fun trackEmail(email: String) {
-        createdEmails.add(email)
-    }
 
     @Nested
     @DisplayName("일반 고객 로그인 API 테스트")
@@ -92,21 +52,7 @@ class CustomerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/customers/login - 정상적인 로그인 요청 시 200 OK와 토큰 정보를 반환한다")
         fun testSuccessfulLogin() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "고객테스트",
-                    email = "customer@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-1111-2222",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerCustomerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             val loginRequest =
                 LoginRequest(
                     email = "customer@example.com",
@@ -150,21 +96,7 @@ class CustomerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/customers/login - 잘못된 비밀번호로 로그인 시도 시 401 Unauthorized를 반환한다")
         fun testLoginWithWrongPassword() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "비밀번호오류",
-                    email = "wrongpwd@example.com",
-                    rawPassword = "correctPassword123!",
-                    defaultAddress = "서울시 서초구",
-                    defaultPhoneNumber = "010-3333-4444",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerCustomerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             val loginRequest =
                 LoginRequest(
                     email = "wrongpwd@example.com",
@@ -206,21 +138,7 @@ class CustomerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/customers/logout - 로그인한 사용자가 로그아웃하면 204 No Content를 반환한다")
         fun testSuccessfulLogout() {
-            // given
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "로그아웃테스트",
-                    email = "logoutcustomer@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-9999-0000",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerCustomerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             // 로그인하여 access token 획득
             val loginRequest =
                 LoginRequest(
@@ -260,7 +178,6 @@ class CustomerAuthenticationControllerIntegrationTest {
         // - Istio API Gateway가 JWT 검증을 담당
         // - 만료된 토큰, 잘못된 서명, 잘못된 issuer, 토큰 없음 등은 Istio에서 처리
         // - 이 서비스는 Istio가 검증한 X-User-Id 헤더만 사용
-
     }
 
     @Nested
@@ -278,7 +195,6 @@ class CustomerAuthenticationControllerIntegrationTest {
                     defaultAddress = "서울특별시 송파구 올림픽로 300",
                     defaultPhoneNumber = "010-1234-5678",
                 )
-            trackEmail(request.email)
 
             // when & then
             mockMvc
@@ -307,7 +223,6 @@ class CustomerAuthenticationControllerIntegrationTest {
                     defaultAddress = "부산시",
                     defaultPhoneNumber = "010-3333-3333",
                 )
-            trackEmail(firstRequest.email)
 
             // 첫 번째 가입
             mockMvc
@@ -373,7 +288,6 @@ class CustomerAuthenticationControllerIntegrationTest {
                     defaultAddress = "서울시 마포구",
                     defaultPhoneNumber = "010-1010-1010",
                 )
-            trackEmail(request.email)
 
             // when
             mockMvc

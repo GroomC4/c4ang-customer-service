@@ -1,26 +1,29 @@
 package com.groom.customer.application.service
 
+import com.auth0.jwt.JWT
 import com.groom.customer.application.dto.LoginCommand
+import com.groom.customer.application.dto.LogoutCommand
 import com.groom.customer.application.dto.RefreshTokenCommand
-import com.groom.customer.application.dto.RegisterCustomerCommand
-import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.common.exception.RefreshTokenException
-import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
-import com.groom.customer.outbound.repository.UserRepositoryImpl
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.jdbc.Sql
+import org.springframework.test.context.jdbc.SqlGroup
+import java.util.UUID
 
 @DisplayName("Refresh Token 서비스 통합 테스트")
 @IntegrationTest
 @SpringBootTest
+@SqlGroup(
+    Sql(scripts = ["/sql/integration/refresh-token-service-test-data.sql"], executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+    Sql(scripts = ["/sql/integration/cleanup.sql"], executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+)
 class RefreshTokenServiceIntegrationTest {
     @Autowired
     private lateinit var refreshTokenService: RefreshTokenService
@@ -28,83 +31,24 @@ class RefreshTokenServiceIntegrationTest {
     @Autowired
     private lateinit var customerAuthenticationService: CustomerAuthenticationService
 
-    @Autowired
-    private lateinit var registerCustomerService: RegisterCustomerService
-
-    @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
-
-    @Autowired
-    private lateinit var refreshTokenRepository: RefreshTokenRepositoryImpl
-
-    @Autowired
-    private lateinit var transactionApplier: TransactionApplier
-
-    private val createdEmails = mutableListOf<String>()
-
-    @BeforeEach
-    fun setUp() {
-        createdEmails.clear()
-    }
-
-    @AfterEach
-    fun tearDown() {
-        // 테스트 데이터 정리 - Primary 트랜잭션으로 실행
-        transactionApplier.applyPrimaryTransaction {
-            createdEmails.forEach { email ->
-                userRepository.findByEmail(email).ifPresent { user ->
-                    refreshTokenRepository.findByUserId(user.id).ifPresent { token ->
-                        refreshTokenRepository.delete(token)
-                    }
-                    userRepository.delete(user)
-                }
-            }
-        }
-    }
-
-    private fun trackEmail(email: String) {
-        createdEmails.add(email)
-    }
-
     @Nested
     @DisplayName("정상 케이스")
     inner class SuccessCases {
         @Test
         @DisplayName("유효한 Refresh Token으로 요청 시 새로운 Access Token을 발급받는다")
         fun testSuccessfulRefresh() {
-            // given - Primary 트랜잭션으로 사용자 등록 및 로그인
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "토큰갱신테스트",
-                    email = "refresh@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 강남구",
-                    defaultPhoneNumber = "010-1111-2222",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerCustomerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             val loginCommand =
                 LoginCommand(
                     email = "refresh@example.com",
                     password = "password123!",
                     clientIp = "127.0.0.1",
                 )
+            val loginResult = customerAuthenticationService.login(loginCommand)
 
-            val loginResult =
-                transactionApplier.applyPrimaryTransaction {
-                    customerAuthenticationService.login(loginCommand)
-                }
-
-            // when - Primary 트랜잭션으로 토큰 갱신
+            // when - 토큰 갱신
             val refreshCommand = RefreshTokenCommand(refreshToken = loginResult.refreshToken)
-            val result =
-                transactionApplier.applyPrimaryTransaction {
-                    refreshTokenService.refresh(refreshCommand)
-                }
+            val result = refreshTokenService.refresh(refreshCommand)
 
             // then
             assertThat(result.accessToken).isNotNull.isNotEmpty
@@ -127,9 +71,7 @@ class RefreshTokenServiceIntegrationTest {
             // when & then
             val exception =
                 assertThrows<RefreshTokenException.RefreshTokenNotFound> {
-                    transactionApplier.applyPrimaryTransaction {
-                        refreshTokenService.refresh(refreshCommand)
-                    }
+                    refreshTokenService.refresh(refreshCommand)
                 }
             assertThat(exception.message).isEqualTo("리프레시 토큰을 찾을 수 없습니다")
         }
@@ -137,53 +79,28 @@ class RefreshTokenServiceIntegrationTest {
         @Test
         @DisplayName("무효화된 Refresh Token으로 요청 시 예외가 발생한다")
         fun testRefreshWithInvalidatedToken() {
-            // given - Primary 트랜잭션으로 사용자 등록, 로그인, 로그아웃
-            val registerCommand =
-                RegisterCustomerCommand(
-                    username = "무효화토큰",
-                    email = "invalidated@example.com",
-                    rawPassword = "password123!",
-                    defaultAddress = "서울시 서초구",
-                    defaultPhoneNumber = "010-3333-4444",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerCustomerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨, 로그인 후 로그아웃으로 토큰 무효화
             val loginCommand =
                 LoginCommand(
                     email = "invalidated@example.com",
                     password = "password123!",
                     clientIp = "127.0.0.1",
                 )
+            val loginResult = customerAuthenticationService.login(loginCommand)
 
-            val loginResult =
-                transactionApplier.applyPrimaryTransaction {
-                    customerAuthenticationService.login(loginCommand)
-                }
+            // JWT에서 userId 추출
+            val decodedJWT = JWT.decode(loginResult.accessToken)
+            val userId = UUID.fromString(decodedJWT.subject)
 
             // 로그아웃하여 토큰 무효화
-            val userId =
-                transactionApplier.applyPrimaryTransaction {
-                    userRepository.findByEmail("invalidated@example.com").get().id!!
-                }
-
-            transactionApplier.applyPrimaryTransaction {
-                customerAuthenticationService.logout(
-                    com.groom.customer.application.dto
-                        .LogoutCommand(userId = userId),
-                )
-            }
+            val logoutCommand = LogoutCommand(userId = userId)
+            customerAuthenticationService.logout(logoutCommand)
 
             // when & then - 무효화된 토큰으로 갱신 시도
             val refreshCommand = RefreshTokenCommand(refreshToken = loginResult.refreshToken)
             val exception =
                 assertThrows<RefreshTokenException.RefreshTokenNotFound> {
-                    transactionApplier.applyPrimaryTransaction {
-                        refreshTokenService.refresh(refreshCommand)
-                    }
+                    refreshTokenService.refresh(refreshCommand)
                 }
             assertThat(exception.message).isEqualTo("리프레시 토큰을 찾을 수 없습니다")
         }

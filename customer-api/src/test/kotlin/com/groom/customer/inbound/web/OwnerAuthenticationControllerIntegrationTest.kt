@@ -1,19 +1,12 @@
 package com.groom.customer.inbound.web
 
 import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.groom.customer.application.dto.RegisterOwnerCommand
-import com.groom.customer.application.service.RegisterOwnerService
-import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.inbound.web.dto.LoginRequest
 import com.groom.customer.inbound.web.dto.RegisterOwnerRequest
-import com.groom.customer.outbound.repository.RefreshTokenRepositoryImpl
 import com.groom.customer.outbound.repository.UserRepositoryImpl
 import com.groom.customer.security.jwt.JwtProperties
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -21,20 +14,21 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
+import org.springframework.test.context.jdbc.SqlGroup
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.Base64
-import java.util.Date
-import java.util.UUID
 
 @DisplayName("판매자 인증 컨트롤러 통합 테스트")
 @IntegrationTest
 @SpringBootTest
 @AutoConfigureMockMvc
+@SqlGroup(
+    Sql(scripts = ["/sql/integration/owner-auth-test-data.sql"], executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+    Sql(scripts = ["/sql/integration/cleanup.sql"], executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
+)
 class OwnerAuthenticationControllerIntegrationTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -43,44 +37,10 @@ class OwnerAuthenticationControllerIntegrationTest {
     private lateinit var objectMapper: ObjectMapper
 
     @Autowired
-    private lateinit var registerOwnerService: RegisterOwnerService
-
-    @Autowired
     private lateinit var userRepository: UserRepositoryImpl
 
     @Autowired
-    private lateinit var refreshTokenRepository: RefreshTokenRepositoryImpl
-
-    @Autowired
-    private lateinit var transactionApplier: TransactionApplier
-
-    @Autowired
     private lateinit var jwtProperties: JwtProperties
-
-    private val createdEmails = mutableListOf<String>()
-
-    @BeforeEach
-    fun setUp() {
-        createdEmails.clear()
-    }
-
-    @AfterEach
-    fun tearDown() {
-        transactionApplier.applyPrimaryTransaction {
-            createdEmails.forEach { email ->
-                userRepository.findByEmail(email).ifPresent { user ->
-                    refreshTokenRepository.findByUserId(user.id).ifPresent { token ->
-                        refreshTokenRepository.delete(token)
-                    }
-                    userRepository.delete(user)
-                }
-            }
-        }
-    }
-
-    private fun trackEmail(email: String) {
-        createdEmails.add(email)
-    }
 
     @Nested
     @DisplayName("판매자 로그인 API 테스트")
@@ -88,20 +48,7 @@ class OwnerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/owners/login - 정상적인 로그인 요청 시 200 OK와 토큰 정보를 반환한다")
         fun testSuccessfulLogin() {
-            // given
-            val registerCommand =
-                RegisterOwnerCommand(
-                    username = "판매자테스트",
-                    email = "owner@example.com",
-                    rawPassword = "password123!",
-                    phoneNumber = "010-1111-2222",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerOwnerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             val loginRequest =
                 LoginRequest(
                     email = "owner@example.com",
@@ -145,20 +92,7 @@ class OwnerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/owners/login - 잘못된 비밀번호로 로그인 시도 시 401 Unauthorized를 반환한다")
         fun testLoginWithWrongPassword() {
-            // given
-            val registerCommand =
-                RegisterOwnerCommand(
-                    username = "판매자비번오류",
-                    email = "ownerwrongpwd@example.com",
-                    rawPassword = "correctPassword123!",
-                    phoneNumber = "010-3333-4444",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerOwnerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             val loginRequest =
                 LoginRequest(
                     email = "ownerwrongpwd@example.com",
@@ -200,20 +134,7 @@ class OwnerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/owners/logout - 로그인한 판매자가 로그아웃하면 204 No Content를 반환한다")
         fun testSuccessfulLogout() {
-            // given
-            val registerCommand =
-                RegisterOwnerCommand(
-                    username = "판매자로그아웃",
-                    email = "logoutowner@example.com",
-                    rawPassword = "password123!",
-                    phoneNumber = "010-9999-0000",
-                )
-            trackEmail(registerCommand.email)
-
-            transactionApplier.applyPrimaryTransaction {
-                registerOwnerService.register(registerCommand)
-            }
-
+            // given - SQL로 사용자 데이터 준비됨
             // 로그인하여 access token 획득
             val loginRequest =
                 LoginRequest(
@@ -252,7 +173,6 @@ class OwnerAuthenticationControllerIntegrationTest {
         // - Istio API Gateway가 JWT 검증을 담당
         // - 만료된 토큰, 잘못된 서명, 잘못된 issuer, 토큰 없음 등은 Istio에서 처리
         // - 이 서비스는 Istio가 검증한 X-User-Id 헤더만 사용
-
     }
 
     @Nested
@@ -265,11 +185,10 @@ class OwnerAuthenticationControllerIntegrationTest {
             val request =
                 RegisterOwnerRequest(
                     username = "판매자김",
-                    email = "owner@example.com",
+                    email = "newowner@example.com",
                     password = "P@ssw0rd!",
                     phoneNumber = "010-9999-9999",
                 )
-            trackEmail(request.email)
 
             // when & then
             mockMvc
@@ -280,7 +199,7 @@ class OwnerAuthenticationControllerIntegrationTest {
                 ).andExpect(status().isCreated)
                 .andExpect(jsonPath("$.user.id").exists())
                 .andExpect(jsonPath("$.user.name").value("판매자김"))
-                .andExpect(jsonPath("$.user.email").value("owner@example.com"))
+                .andExpect(jsonPath("$.user.email").value("newowner@example.com"))
                 .andExpect(jsonPath("$.createdAt").exists())
         }
 
@@ -295,7 +214,6 @@ class OwnerAuthenticationControllerIntegrationTest {
                     password = "password123!",
                     phoneNumber = "010-8888-8888",
                 )
-            trackEmail(request.email)
 
             // when
             mockMvc
@@ -325,29 +243,12 @@ class OwnerAuthenticationControllerIntegrationTest {
         @Test
         @DisplayName("POST /api/v1/auth/owners/signup - 동일한 이메일로 판매자 중복 가입 시도 시 409 Conflict를 반환한다")
         fun testDuplicateEmailSignup() {
-            // given
-            val firstRequest =
-                RegisterOwnerRequest(
-                    username = "첫번째판매자",
-                    email = "duplicate@example.com",
-                    password = "password123!",
-                    phoneNumber = "010-7777-7777",
-                )
-            trackEmail(firstRequest.email)
-
-            // 첫 번째 가입
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/owners/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(firstRequest)),
-                ).andExpect(status().isCreated)
-
-            // given - 동일 이메일로 다시 가입 시도
+            // given - SQL로 사용자 데이터 준비됨 (owner@example.com)
+            // 동일 이메일로 가입 시도
             val duplicateRequest =
                 RegisterOwnerRequest(
                     username = "두번째판매자",
-                    email = "duplicate@example.com", // 동일 이메일
+                    email = "owner@example.com", // SQL에 이미 존재하는 이메일
                     password = "different123!",
                     phoneNumber = "010-6666-6666",
                 )
@@ -360,7 +261,7 @@ class OwnerAuthenticationControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(duplicateRequest)),
                 ).andExpect(status().isConflict)
                 .andExpect(jsonPath("$.code").value("DUPLICATE_EMAIL"))
-                .andExpect(jsonPath("$.message").value("이미 존재하는 이메일입니다: duplicate@example.com"))
+                .andExpect(jsonPath("$.message").value("이미 존재하는 이메일입니다: owner@example.com"))
         }
 
         @Test
