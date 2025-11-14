@@ -252,7 +252,6 @@ class OwnerAuthenticationControllerIntegrationTest {
         // - Istio API Gateway가 JWT 검증을 담당
         // - 만료된 토큰, 잘못된 서명, 잘못된 issuer, 토큰 없음 등은 Istio에서 처리
         // - 이 서비스는 Istio가 검증한 X-User-Id 헤더만 사용
-
     }
 
     @Nested

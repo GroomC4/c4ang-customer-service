@@ -1,7 +1,7 @@
 package com.groom.customer.fixture
 
-import com.groom.customer.domain.service.NewStore
-import com.groom.customer.domain.service.StoreFactory
+import com.groom.customer.domain.port.CreateStorePort
+import com.groom.customer.domain.port.NewStore
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Profile
@@ -11,12 +11,12 @@ import java.util.UUID
 private val logger = KotlinLogging.logger {}
 
 /**
- * 테스트 환경 전용 StoreFactory 구현체
+ * 테스트 환경 전용 CreateStorePort 구현체
  */
 @Component
 @Profile("test")
 @Primary
-class NoOpsStoreAdapter : StoreFactory {
+class NoOpsStoreAdapter : CreateStorePort {
     override fun createNewStore(
         ownerUserId: UUID,
         name: String,

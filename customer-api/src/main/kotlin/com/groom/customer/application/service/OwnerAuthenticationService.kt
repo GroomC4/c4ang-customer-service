@@ -7,8 +7,8 @@ import com.groom.customer.application.dto.toLoginResult
 import com.groom.customer.common.enums.UserRole
 import com.groom.customer.common.exception.AuthenticationException
 import com.groom.customer.common.exception.UserException
+import com.groom.customer.domain.port.VerifyPasswordPort
 import com.groom.customer.domain.service.Authenticator
-import com.groom.customer.domain.service.PasswordVerifier
 import com.groom.customer.domain.service.UserPolicy
 import com.groom.customer.outbound.repository.UserRepositoryImpl
 import org.springframework.stereotype.Service
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class OwnerAuthenticationService(
     private val userRepository: UserRepositoryImpl,
-    private val passwordVerifier: PasswordVerifier,
+    private val verifyPasswordPort: VerifyPasswordPort,
     private val authenticator: Authenticator,
     private val userPolicy: UserPolicy,
 ) {
@@ -37,7 +37,7 @@ class OwnerAuthenticationService(
                 .orElseThrow { AuthenticationException.UserNotFoundByEmail(email = command.email) }
 
         // 2. 비밀번호 검증
-        if (!passwordVerifier.verifyPassword(user, command.password)) {
+        if (!verifyPasswordPort.verifyPassword(user, command.password)) {
             throw AuthenticationException.InvalidPassword(email = command.email)
         }
 

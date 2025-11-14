@@ -1,35 +1,39 @@
-package com.groom.customer.outbound.adapter
+package com.groom.customer.adapter.out.security
 
 import com.groom.customer.domain.model.User
-import com.groom.customer.domain.service.TokenProvider
+import com.groom.customer.domain.port.GenerateTokenPort
 import com.groom.customer.security.jwt.AuthorizationData
 import com.groom.customer.security.jwt.JwtProperties
 import com.groom.customer.security.jwt.JwtTokenProvider
 import org.springframework.stereotype.Component
 
 /**
- * JWT 기반 TokenProvider 구현체
+ * JWT 기반 토큰 생성 Adapter.
+ * GenerateTokenPort를 구현하여 Domain이 필요로 하는 토큰 생성 계약을 제공합니다.
  */
 @Component
-class JwtTokenProviderAdapter(
+class TokenGeneratorAdapter(
     private val jwtTokenProvider: JwtTokenProvider,
     private val properties: JwtProperties,
-) : TokenProvider {
-    override fun generateAccessToken(user: User): String =
-        jwtTokenProvider.generateAccessToken(
-            AuthorizationData(
-                id = user.id.toString(),
-                roleName = user.role.name,
-            ),
-        )
+) : GenerateTokenPort {
 
-    override fun generateRefreshToken(user: User): String =
-        jwtTokenProvider.generateRefreshToken(
+    override fun generateAccessToken(user: User): String {
+        return jwtTokenProvider.generateAccessToken(
             AuthorizationData(
                 id = user.id.toString(),
                 roleName = user.role.name,
             ),
         )
+    }
+
+    override fun generateRefreshToken(user: User): String {
+        return jwtTokenProvider.generateRefreshToken(
+            AuthorizationData(
+                id = user.id.toString(),
+                roleName = user.role.name,
+            ),
+        )
+    }
 
     override fun validateRefreshToken(token: String) {
         // Refresh Token 검증은 DB 조회로만 처리
@@ -38,7 +42,11 @@ class JwtTokenProviderAdapter(
         // JWT 자체 검증은 불필요 (DB가 신뢰할 수 있는 소스)
     }
 
-    override fun getAccessTokenValiditySeconds(): Long = properties.accessTokenExpirationMinutes * 60
+    override fun getAccessTokenValiditySeconds(): Long {
+        return properties.accessTokenExpirationMinutes * 60
+    }
 
-    override fun getRefreshTokenValiditySeconds(): Long = properties.refreshTokenExpirationDays * 24 * 60 * 60
+    override fun getRefreshTokenValiditySeconds(): Long {
+        return properties.refreshTokenExpirationDays * 24 * 60 * 60
+    }
 }

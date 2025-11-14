@@ -10,7 +10,7 @@ import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.TokenCredentials
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.service.Authenticator
-import com.groom.customer.domain.service.PasswordVerifier
+import com.groom.customer.domain.port.VerifyPasswordPort
 import com.groom.customer.domain.service.UserPolicy
 import com.groom.customer.outbound.repository.UserRepositoryImpl
 import io.kotest.assertions.throwables.shouldThrow
@@ -33,14 +33,14 @@ class OwnerAuthenticationServiceTest :
 
         Given("유효한 판매자 로그인 정보가 주어졌을 때") {
             val userRepository = mockk<UserRepositoryImpl>()
-            val passwordVerifier = mockk<PasswordVerifier>()
+            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 OwnerAuthenticationService(
                     userRepository = userRepository,
-                    passwordVerifier = passwordVerifier,
+                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -70,7 +70,7 @@ class OwnerAuthenticationServiceTest :
                 )
 
             every { userRepository.findByEmailAndRole(loginCommand.email, UserRole.OWNER) } returns Optional.of(user)
-            every { passwordVerifier.verifyPassword(user, loginCommand.password) } returns true
+            every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns true
             every { authenticator.createAndPersistCredentials(user, loginCommand.clientIp, any()) } returns tokenCredentials
 
             When("로그인을 시도하면") {
@@ -83,7 +83,7 @@ class OwnerAuthenticationServiceTest :
                     result.tokenType shouldBe "Bearer"
 
                     verify(exactly = 1) { userRepository.findByEmailAndRole(loginCommand.email, UserRole.OWNER) }
-                    verify(exactly = 1) { passwordVerifier.verifyPassword(user, loginCommand.password) }
+                    verify(exactly = 1) { verifyPasswordPort.verifyPassword(user, loginCommand.password) }
                     verify(exactly = 1) { authenticator.createAndPersistCredentials(user, loginCommand.clientIp, any()) }
                 }
             }
@@ -91,14 +91,14 @@ class OwnerAuthenticationServiceTest :
 
         Given("잘못된 비밀번호로 로그인할 때") {
             val userRepository = mockk<UserRepositoryImpl>()
-            val passwordVerifier = mockk<PasswordVerifier>()
+            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 OwnerAuthenticationService(
                     userRepository = userRepository,
-                    passwordVerifier = passwordVerifier,
+                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -117,7 +117,7 @@ class OwnerAuthenticationServiceTest :
                 )
 
             every { userRepository.findByEmailAndRole(loginCommand.email, UserRole.OWNER) } returns Optional.of(user)
-            every { passwordVerifier.verifyPassword(user, loginCommand.password) } returns false
+            every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns false
 
             When("로그인을 시도하면") {
                 Then("예외가 발생한다") {
@@ -128,7 +128,7 @@ class OwnerAuthenticationServiceTest :
                     exception.email shouldBe "owner@example.com"
 
                     verify(exactly = 1) { userRepository.findByEmailAndRole(loginCommand.email, UserRole.OWNER) }
-                    verify(exactly = 1) { passwordVerifier.verifyPassword(user, loginCommand.password) }
+                    verify(exactly = 1) { verifyPasswordPort.verifyPassword(user, loginCommand.password) }
                     verify(exactly = 0) { authenticator.createAndPersistCredentials(any(), any()) }
                 }
             }
@@ -136,14 +136,14 @@ class OwnerAuthenticationServiceTest :
 
         Given("존재하지 않는 이메일로 로그인할 때") {
             val userRepository = mockk<UserRepositoryImpl>()
-            val passwordVerifier = mockk<PasswordVerifier>()
+            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 OwnerAuthenticationService(
                     userRepository = userRepository,
-                    passwordVerifier = passwordVerifier,
+                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -166,7 +166,7 @@ class OwnerAuthenticationServiceTest :
                     exception.email shouldBe "nonexistent@example.com"
 
                     verify(exactly = 1) { userRepository.findByEmailAndRole(loginCommand.email, UserRole.OWNER) }
-                    verify(exactly = 0) { passwordVerifier.verifyPassword(any(), any()) }
+                    verify(exactly = 0) { verifyPasswordPort.verifyPassword(any(), any()) }
                     verify(exactly = 0) { authenticator.createAndPersistCredentials(any(), any()) }
                 }
             }
@@ -174,14 +174,14 @@ class OwnerAuthenticationServiceTest :
 
         Given("로그인한 판매자가 로그아웃할 때") {
             val userRepository = mockk<UserRepositoryImpl>()
-            val passwordVerifier = mockk<PasswordVerifier>()
+            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 OwnerAuthenticationService(
                     userRepository = userRepository,
-                    passwordVerifier = passwordVerifier,
+                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -211,14 +211,14 @@ class OwnerAuthenticationServiceTest :
 
         Given("CUSTOMER 역할의 사용자가 OWNER 로그아웃을 시도할 때") {
             val userRepository = mockk<UserRepositoryImpl>()
-            val passwordVerifier = mockk<PasswordVerifier>()
+            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 OwnerAuthenticationService(
                     userRepository = userRepository,
-                    passwordVerifier = passwordVerifier,
+                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -253,14 +253,14 @@ class OwnerAuthenticationServiceTest :
 
         Given("존재하지 않는 사용자가 로그아웃을 시도할 때") {
             val userRepository = mockk<UserRepositoryImpl>()
-            val passwordVerifier = mockk<PasswordVerifier>()
+            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 OwnerAuthenticationService(
                     userRepository = userRepository,
-                    passwordVerifier = passwordVerifier,
+                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )

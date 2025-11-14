@@ -4,22 +4,22 @@ import com.groom.customer.common.enums.UserRole
 import com.groom.customer.common.exception.PermissionException
 import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.User
+import com.groom.customer.domain.port.LoadUserPort
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
 class UserPolicy(
-    private val userReader: UserReader,
+    private val loadUserPort: LoadUserPort,
 ) {
     fun checkAlreadyRegister(
         email: String,
         role: UserRole,
     ) {
-        userReader
-            .findByEmailAndRole(email, role)
-            .ifPresent {
-                throw UserException.DuplicateEmail(email = email)
-            }
+        val existingUser = loadUserPort.loadByEmailAndRole(email, role)
+        if (existingUser != null) {
+            throw UserException.DuplicateEmail(email = email)
+        }
     }
 
     /**
@@ -31,9 +31,8 @@ class UserPolicy(
      */
     fun checkOwnerRole(userId: UUID) {
         val user =
-            userReader
-                .findById(userId)
-                .orElseThrow { UserException.UserNotFound(userId) }
+            loadUserPort.loadById(userId)
+                ?: throw UserException.UserNotFound(userId)
 
         if (user.role != UserRole.OWNER) {
             throw UserException.InsufficientPermission(

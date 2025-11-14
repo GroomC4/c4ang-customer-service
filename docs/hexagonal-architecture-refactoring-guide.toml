@@ -1,0 +1,596 @@
+# Hexagonal Architecture 리팩토링 가이드
+# Spring JPA + DDD 환경에서 Domain Port 패턴 적용
+
+[metadata]
+version = "1.0.0"
+author = "Claude Code"
+created_at = "2025-11-14"
+description = "Spring JPA를 사용하는 DDD 프로젝트에서 헥사고날 아키텍처의 Port/Adapter 패턴을 적용하는 가이드"
+
+[architecture]
+pattern = "Hexagonal Architecture (Ports and Adapters)"
+framework = "Spring Boot + Spring Data JPA"
+design_approach = "Domain-Driven Design (DDD)"
+
+[architecture.principles]
+dependency_direction = "Adapter → Port → Domain"
+port_location = "domain/port/"
+port_naming = "Port suffix (예: LoadStorePort, SaveStorePort)"
+jpa_repository_location = "adapter/out/persistence/"
+domain_purity = "Domain은 프레임워크에 의존하지 않음"
+
+# ============================================================
+# 1. 패키지 구조
+# ============================================================
+
+[package_structure]
+description = "헥사고날 아키텍처의 표준 패키지 구조"
+
+[package_structure.before]
+description = "리팩토링 전 구조 (일반적인 레이어드 아키텍처)"
+example = """
+com.example.domain/
+├── domain/
+│   ├── model/
+│   └── service/          # ⚠️ Port가 여기 있음 (StoreReader, StoreWriter)
+├── application/
+│   └── service/
+└── outbound/
+    └── adapter/          # Port 구현체
+"""
+
+[package_structure.after]
+description = "리팩토링 후 구조 (헥사고날 아키텍처)"
+example = """
+com.example.domain/
+├── domain/
+│   ├── model/           # 도메인 엔티티
+│   ├── service/         # 도메인 서비스 (순수 비즈니스 로직)
+│   └── port/            # ✅ Port 인터페이스 (Domain의 계약)
+│       ├── LoadXxxPort.kt
+│       ├── SaveXxxPort.kt
+│       └── PublishEventPort.kt
+├── application/
+│   └── service/         # Use Case 구현 (Application Service)
+└── adapter/
+    ├── in/
+    │   └── web/         # Inbound Adapter (Controller)
+    └── out/
+        ├── persistence/ # ✅ Outbound Adapter (Port 구현)
+        │   ├── XxxJpaRepository.kt      # Spring Data JPA
+        │   ├── XxxPersistenceAdapter.kt # Port 구현체
+        │   └── entity/                  # JPA Entity
+        └── event/       # 이벤트 발행 Adapter
+            └── XxxEventAdapter.kt
+"""
+
+# ============================================================
+# 2. Port 인터페이스 정의 규칙
+# ============================================================
+
+[port_interface]
+description = "Domain Port 인터페이스 작성 가이드"
+
+[port_interface.naming_convention]
+description = "Port 네이밍 규칙"
+pattern = "동사 + 도메인명 + Port"
+examples = [
+    "LoadStorePort - 조회용",
+    "SaveStorePort - 저장용",
+    "LoadUserPort - 외부 서비스 조회용",
+    "PublishEventPort - 이벤트 발행용",
+    "SendEmailPort - 알림 발송용"
+]
+
+[[port_interface.naming_convention.rules]]
+type = "조회 (Read)"
+prefix = "Load"
+example = "LoadStorePort, LoadOrderPort"
+description = "데이터를 읽어오는 Port"
+
+[[port_interface.naming_convention.rules]]
+type = "저장 (Write)"
+prefix = "Save"
+example = "SaveStorePort, SaveProductPort"
+description = "데이터를 저장하는 Port"
+
+[[port_interface.naming_convention.rules]]
+type = "외부 시스템 통신"
+prefix = "동사 (Send, Publish, Notify)"
+example = "PublishEventPort, SendEmailPort"
+description = "외부 시스템과 통신하는 Port"
+
+[port_interface.jpa_repository_distinction]
+description = "Spring Data JPA Repository와 Port의 명확한 구분"
+comparison = """
+| 구분 | Domain Port | Spring Data JPA Repository |
+|------|-------------|----------------------------|
+| 위치 | domain/port/ | adapter/out/persistence/ |
+| 네이밍 | LoadStorePort | StoreJpaRepository |
+| 역할 | Domain의 계약 | JPA 기술 구현 |
+| 의존자 | Domain + Application | Adapter만 |
+| 반환 타입 | Domain Model | JPA Entity or Domain Model |
+"""
+
+[port_interface.code_template]
+description = "Port 인터페이스 코드 템플릿"
+example = """
+package com.example.domain.port
+
+import com.example.domain.model.Store
+import java.util.UUID
+
+/**
+ * [도메인명] [작업] 을 위한 Outbound Port.
+ * Domain이 외부 [시스템]에 요구하는 계약.
+ */
+interface Load[도메인명]Port {
+    /**
+     * [설명]
+     *
+     * @param id [파라미터 설명]
+     * @return [반환값 설명]
+     */
+    fun loadById(id: UUID): [도메인모델]?
+
+    fun existsBy[조건](조건: Type): Boolean
+}
+"""
+
+# ============================================================
+# 3. Adapter 구현 가이드
+# ============================================================
+
+[adapter_implementation]
+description = "Port를 구현하는 Adapter 작성 가이드"
+
+[adapter_implementation.persistence_adapter]
+description = "영속성 Adapter (JPA 사용)"
+location = "adapter/out/persistence/"
+
+[adapter_implementation.persistence_adapter.components]
+jpa_repository = """
+// Spring Data JPA Repository (Adapter 내부)
+interface StoreJpaRepository : JpaRepository<StoreJpaEntity, UUID> {
+    fun existsByOwnerUserId(ownerUserId: UUID): Boolean
+    fun findByOwnerUserId(ownerUserId: UUID): StoreJpaEntity?
+}
+"""
+
+persistence_adapter = """
+// Port 구현체 (Adapter)
+@Component
+class StorePersistenceAdapter(
+    private val storeJpaRepository: StoreJpaRepository,
+    private val storeMapper: StoreMapper,
+) : LoadStorePort, SaveStorePort {
+
+    override fun loadById(storeId: UUID): Store? {
+        return storeJpaRepository.findById(storeId)
+            .map { storeMapper.toDomain(it) }
+            .orElse(null)
+    }
+
+    override fun save(store: Store): Store {
+        val entity = storeMapper.toEntity(store)
+        val saved = storeJpaRepository.save(entity)
+        return storeMapper.toDomain(saved)
+    }
+}
+"""
+
+mapper = """
+// Domain Model ↔ JPA Entity 변환
+@Component
+class StoreMapper {
+    fun toDomain(entity: StoreJpaEntity): Store { /* ... */ }
+    fun toEntity(domain: Store): StoreJpaEntity { /* ... */ }
+}
+"""
+
+[adapter_implementation.event_adapter]
+description = "이벤트 발행 Adapter (Kafka 사용)"
+location = "adapter/out/event/"
+example = """
+@Component
+class StoreEventAdapter(
+    private val storeEventPublisher: StoreEventPublisher,
+) : PublishEventPort {
+
+    override fun publishStoreCreated(event: StoreCreatedEvent) {
+        val avroEvent = event.toAvro()
+        storeEventPublisher.publishStoreCreated(avroEvent)
+    }
+
+    override fun publishStoreInfoUpdated(event: StoreInfoUpdatedEvent) {
+        val avroEvent = event.toAvro()
+        storeEventPublisher.publishStoreInfoUpdated(avroEvent)
+    }
+}
+"""
+
+# ============================================================
+# 4. Domain Service 리팩토링
+# ============================================================
+
+[domain_service_refactoring]
+description = "Domain Service가 Port를 사용하도록 수정"
+
+[domain_service_refactoring.before]
+code = """
+@Component
+class StorePolicy(
+    private val storeReader: StoreReader,  // ⚠️ 구체적인 인터페이스
+) {
+    fun checkStoreAlreadyExists(ownerUserId: UUID) {
+        if (storeReader.existsByOwnerUserId(ownerUserId)) {
+            throw StoreException.DuplicateStore(ownerUserId)
+        }
+    }
+}
+"""
+
+[domain_service_refactoring.after]
+code = """
+@Component
+class StorePolicy(
+    private val loadStorePort: LoadStorePort,  // ✅ Port 인터페이스
+) {
+    fun checkStoreAlreadyExists(ownerUserId: UUID) {
+        if (loadStorePort.existsByOwnerUserId(ownerUserId)) {
+            throw StoreException.DuplicateStore(ownerUserId)
+        }
+    }
+}
+"""
+
+# ============================================================
+# 5. Application Service 리팩토링
+# ============================================================
+
+[application_service_refactoring]
+description = "Application Service가 Port를 사용하도록 수정"
+
+[application_service_refactoring.before]
+code = """
+@Service
+class RegisterService(
+    private val storeWriter: StoreWriter,  // ⚠️ 구체적인 인터페이스
+    private val storeFactory: StoreFactory,
+) {
+    @Transactional
+    fun register(command: RegisterStoreCommand): RegisterStoreResult {
+        val newStore = storeFactory.createNewStore(...)
+        storeWriter.save(newStore)
+        return RegisterStoreResult(...)
+    }
+}
+"""
+
+[application_service_refactoring.after]
+code = """
+@Service
+class RegisterService(
+    private val saveStorePort: SaveStorePort,        // ✅ Port 인터페이스
+    private val publishEventPort: PublishEventPort,  // ✅ Port 인터페이스
+    private val storeFactory: StoreFactory,
+) {
+    @Transactional
+    fun register(command: RegisterStoreCommand): RegisterStoreResult {
+        val newStore = storeFactory.createNewStore(...)
+            .let { saveStorePort.save(it) }
+
+        // 이벤트 발행도 Port를 통해
+        publishEventPort.publishStoreCreated(newStore.toEvent())
+
+        return RegisterStoreResult(...)
+    }
+}
+"""
+
+# ============================================================
+# 6. 리팩토링 단계별 가이드
+# ============================================================
+
+[refactoring_steps]
+description = "리팩토링 진행 순서"
+
+[[refactoring_steps.step]]
+order = 1
+title = "Domain Port 인터페이스 생성"
+location = "domain/port/"
+tasks = [
+    "기존 domain/service의 인터페이스 분석",
+    "LoadXxxPort, SaveXxxPort 등 Port 인터페이스 생성",
+    "메서드명을 load*, save* 패턴으로 변경 (find* → load*)",
+    "PublishEventPort 등 외부 시스템 Port 추가"
+]
+
+[[refactoring_steps.step]]
+order = 2
+title = "Adapter 구현체 생성"
+location = "adapter/out/persistence/, adapter/out/event/"
+tasks = [
+    "XxxPersistenceAdapter 클래스 생성",
+    "Port 인터페이스 구현 (implements LoadXxxPort, SaveXxxPort)",
+    "기존 XxxJpaRepository 주입받아 사용",
+    "Mapper를 통해 JpaEntity ↔ Domain Model 변환"
+]
+
+[[refactoring_steps.step]]
+order = 3
+title = "Domain Service 수정"
+location = "domain/service/"
+tasks = [
+    "기존 Reader, Writer 의존성을 Port로 변경",
+    "import 문 수정 (domain.service → domain.port)",
+    "생성자 파라미터명 변경 (storeReader → loadStorePort)"
+]
+
+[[refactoring_steps.step]]
+order = 4
+title = "Application Service 수정"
+location = "application/service/"
+tasks = [
+    "기존 Reader, Writer 의존성을 Port로 변경",
+    "PublishEventPort 추가 (이벤트 발행 로직이 있는 경우)",
+    "import 문 수정"
+]
+
+[[refactoring_steps.step]]
+order = 5
+title = "기존 인터페이스 제거"
+location = "domain/service/"
+tasks = [
+    "domain/service의 StoreReader, StoreWriter 등 제거",
+    "outbound/adapter의 구현체를 adapter/out/persistence로 이동 또는 제거",
+    "사용하지 않는 파일 정리"
+]
+
+[[refactoring_steps.step]]
+order = 6
+title = "빌드 및 테스트"
+tasks = [
+    "./gradlew clean build 실행",
+    "컴파일 에러 확인 및 수정",
+    "단위 테스트 실행",
+    "통합 테스트 실행"
+]
+
+# ============================================================
+# 7. 자주 하는 실수와 해결책
+# ============================================================
+
+[common_mistakes]
+description = "리팩토링 시 자주 발생하는 실수와 해결 방법"
+
+[[common_mistakes.mistake]]
+issue = "Port를 application/port에 위치시킴"
+problem = "Domain이 Application을 의존하게 되어 의존성 역전 실패"
+solution = "Port는 domain/port에 위치. Domain이 자신의 계약을 정의함"
+
+[[common_mistakes.mistake]]
+issue = "JPA Repository를 Port로 직접 사용"
+problem = "Domain이 JPA 프레임워크에 의존하게 됨"
+solution = "JpaRepository는 Adapter 내부에만 존재. Port는 순수 인터페이스"
+
+[[common_mistakes.mistake]]
+issue = "Domain과 Application이 같은 Port를 의존하는 것을 문제로 봄"
+problem = "이것은 문제가 아니라 정상적인 패턴"
+solution = "두 레이어 모두 같은 데이터가 필요하므로 같은 Port 의존은 자연스러움"
+
+[[common_mistakes.mistake]]
+issue = "메서드명을 find*로 유지"
+problem = "Spring Data JPA와 혼동 가능"
+solution = "Port는 load*, save* 등 명확한 비즈니스 용어 사용"
+
+[[common_mistakes.mistake]]
+issue = "Port에서 Optional 반환"
+problem = "Port는 Domain 계약이므로 null 가능 타입이 더 명확"
+solution = "Kotlin에서는 Store? 타입 사용. Optional은 JPA Adapter 내부에서만"
+
+# ============================================================
+# 8. 의존성 흐름 다이어그램
+# ============================================================
+
+[dependency_flow]
+description = "헥사고날 아키텍처의 의존성 방향"
+diagram = """
+┌─────────────────────────────────────────────────────────┐
+│                    Inbound Adapter                       │
+│                  (Controller, REST API)                   │
+└────────────────────────┬────────────────────────────────┘
+                         │ 호출
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│                 Application Service                      │
+│                   (Use Case 구현)                        │
+│  - RegisterService                                       │
+│  - UpdateService                                         │
+└──────────┬──────────────────────────┬───────────────────┘
+           │ 의존                      │ 의존
+           ↓                           ↓
+    ┌──────────────┐          ┌──────────────────┐
+    │ Domain Port  │          │  Domain Service  │
+    │              │          │                  │
+    │ LoadStorePort│←─────────│  StorePolicy     │
+    │ SaveStorePort│   의존   │  StoreFactory    │
+    │              │          │                  │
+    └──────┬───────┘          └──────────────────┘
+           │ 구현
+           ↓
+┌─────────────────────────────────────────────────────────┐
+│                  Outbound Adapter                        │
+│              (Persistence, Event, External)              │
+│  - StorePersistenceAdapter                              │
+│  - StoreEventAdapter                                    │
+└─────────────────────────────────────────────────────────┘
+
+의존성 방향: Adapter → Port → Domain (항상 안쪽으로!)
+"""
+
+# ============================================================
+# 9. 체크리스트
+# ============================================================
+
+[checklist]
+description = "리팩토링 완료 확인 체크리스트"
+
+[[checklist.item]]
+category = "패키지 구조"
+items = [
+    "[ ] domain/port/ 패키지가 생성되었는가?",
+    "[ ] adapter/out/persistence/ 패키지가 생성되었는가?",
+    "[ ] adapter/out/event/ 패키지가 생성되었는가? (이벤트 사용 시)",
+]
+
+[[checklist.item]]
+category = "Port 인터페이스"
+items = [
+    "[ ] Port 네이밍이 명확한가? (LoadXxxPort, SaveXxxPort 등)",
+    "[ ] Port가 domain/port에 위치하는가?",
+    "[ ] Port 메서드명이 load*, save* 패턴을 따르는가?",
+    "[ ] Port에 프레임워크 의존성이 없는가? (JPA, Spring 등)",
+]
+
+[[checklist.item]]
+category = "Adapter 구현"
+items = [
+    "[ ] Adapter가 Port를 구현하는가?",
+    "[ ] JpaRepository가 Adapter 내부에만 존재하는가?",
+    "[ ] Mapper를 통해 Domain ↔ Entity 변환하는가?",
+    "[ ] Adapter에 @Component 어노테이션이 있는가?",
+]
+
+[[checklist.item]]
+category = "Domain/Application Service"
+items = [
+    "[ ] Domain Service가 Port를 의존하는가?",
+    "[ ] Application Service가 Port를 의존하는가?",
+    "[ ] 기존 Reader, Writer 인터페이스 의존성을 제거했는가?",
+    "[ ] import 문이 domain.port를 가리키는가?",
+]
+
+[[checklist.item]]
+category = "기존 코드 정리"
+items = [
+    "[ ] domain/service의 기존 Port 인터페이스를 제거했는가?",
+    "[ ] 사용하지 않는 Adapter 구현체를 제거했는가?",
+    "[ ] 중복된 인터페이스가 없는가?",
+]
+
+[[checklist.item]]
+category = "테스트"
+items = [
+    "[ ] 빌드가 성공하는가? (./gradlew clean build)",
+    "[ ] 단위 테스트가 통과하는가?",
+    "[ ] 통합 테스트가 통과하는가?",
+    "[ ] Mock 테스트에서 Port를 사용하는가?",
+]
+
+# ============================================================
+# 10. 예제: 전체 흐름
+# ============================================================
+
+[example]
+description = "Store 도메인의 전체 리팩토링 예제"
+
+[example.port_interface]
+file = "domain/port/LoadStorePort.kt"
+code = """
+package com.groom.store.domain.port
+
+import com.groom.store.domain.model.Store
+import java.util.UUID
+
+interface LoadStorePort {
+    fun loadById(storeId: UUID): Store?
+    fun loadByOwnerUserId(ownerUserId: UUID): Store?
+    fun existsByOwnerUserId(ownerUserId: UUID): Boolean
+}
+"""
+
+[example.adapter]
+file = "adapter/out/persistence/StorePersistenceAdapter.kt"
+code = """
+package com.groom.store.adapter.out.persistence
+
+import com.groom.store.domain.model.Store
+import com.groom.store.domain.port.LoadStorePort
+import com.groom.store.domain.port.SaveStorePort
+import org.springframework.stereotype.Component
+import java.util.UUID
+
+@Component
+class StorePersistenceAdapter(
+    private val storeJpaRepository: StoreJpaRepository,
+    private val storeMapper: StoreMapper,
+) : LoadStorePort, SaveStorePort {
+
+    override fun loadById(storeId: UUID): Store? {
+        return storeJpaRepository.findById(storeId)
+            .map { storeMapper.toDomain(it) }
+            .orElse(null)
+    }
+
+    override fun existsByOwnerUserId(ownerUserId: UUID): Boolean {
+        return storeJpaRepository.existsByOwnerUserId(ownerUserId)
+    }
+
+    override fun save(store: Store): Store {
+        val entity = storeMapper.toEntity(store)
+        return storeJpaRepository.save(entity)
+            .let { storeMapper.toDomain(it) }
+    }
+}
+"""
+
+[example.domain_service]
+file = "domain/service/StorePolicy.kt"
+code = """
+package com.groom.store.domain.service
+
+import com.groom.store.domain.port.LoadStorePort
+import org.springframework.stereotype.Component
+import java.util.UUID
+
+@Component
+class StorePolicy(
+    private val loadStorePort: LoadStorePort,
+) {
+    fun checkStoreAlreadyExists(ownerUserId: UUID) {
+        if (loadStorePort.existsByOwnerUserId(ownerUserId)) {
+            throw StoreException.DuplicateStore(ownerUserId)
+        }
+    }
+}
+"""
+
+[example.application_service]
+file = "application/service/RegisterService.kt"
+code = """
+package com.groom.store.application.service
+
+import com.groom.store.domain.port.SaveStorePort
+import com.groom.store.domain.port.PublishEventPort
+import com.groom.store.domain.service.StoreFactory
+import org.springframework.stereotype.Service
+
+@Service
+class RegisterService(
+    private val saveStorePort: SaveStorePort,
+    private val publishEventPort: PublishEventPort,
+    private val storeFactory: StoreFactory,
+) {
+    @Transactional
+    fun register(command: RegisterStoreCommand): RegisterStoreResult {
+        val newStore = storeFactory
+            .createNewStore(command.ownerUserId, command.name, command.description)
+            .let { saveStorePort.save(it) }
+
+        publishEventPort.publishStoreCreated(newStore.toEvent())
+
+        return RegisterStoreResult(...)
+    }
+}
+"""
