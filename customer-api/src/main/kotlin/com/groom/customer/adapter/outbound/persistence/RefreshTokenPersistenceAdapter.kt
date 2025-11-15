@@ -1,9 +1,9 @@
 package com.groom.customer.adapter.outbound.persistence
 
+import com.groom.customer.adapter.outbound.persistence.RefreshTokenRepositoryImpl
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.port.LoadRefreshTokenPort
 import com.groom.customer.domain.port.SaveRefreshTokenPort
-import com.groom.customer.adapter.outbound.persistence.RefreshTokenRepositoryImpl
 import org.springframework.stereotype.Component
 import java.util.UUID
 

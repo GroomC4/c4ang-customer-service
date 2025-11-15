@@ -1,8 +1,8 @@
 package com.groom.customer.adapter.inbound.web
 
-import com.groom.customer.application.service.RefreshTokenService
 import com.groom.customer.adapter.inbound.web.dto.RefreshTokenRequest
 import com.groom.customer.adapter.inbound.web.dto.RefreshTokenResponse
+import com.groom.customer.application.service.RefreshTokenService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses

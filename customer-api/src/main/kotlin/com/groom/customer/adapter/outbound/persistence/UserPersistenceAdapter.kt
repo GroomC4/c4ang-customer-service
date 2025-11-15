@@ -1,10 +1,10 @@
 package com.groom.customer.adapter.outbound.persistence
 
+import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import com.groom.customer.common.enums.UserRole
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.port.LoadUserPort
 import com.groom.customer.domain.port.SaveUserPort
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -15,7 +15,8 @@ import java.util.UUID
 @Component
 class UserPersistenceAdapter(
     private val userRepository: UserRepositoryImpl,
-) : LoadUserPort, SaveUserPort {
+) : LoadUserPort,
+    SaveUserPort {
     override fun loadByEmail(email: String): User? =
         userRepository
             .findByEmail(email)

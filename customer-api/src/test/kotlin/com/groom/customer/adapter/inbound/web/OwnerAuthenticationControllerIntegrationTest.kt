@@ -2,10 +2,10 @@ package com.groom.customer.adapter.inbound.web
 
 import com.auth0.jwt.JWT
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.adapter.inbound.web.dto.LoginRequest
 import com.groom.customer.adapter.inbound.web.dto.RegisterOwnerRequest
 import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
+import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.security.jwt.JwtProperties
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested

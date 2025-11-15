@@ -1,13 +1,13 @@
 package com.groom.customer.domain.service
 
+import com.groom.customer.adapter.outbound.persistence.UserProfileRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.domain.model.Address
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber
 import com.groom.customer.domain.model.Username
-import com.groom.customer.adapter.outbound.persistence.UserProfileRepositoryImpl
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

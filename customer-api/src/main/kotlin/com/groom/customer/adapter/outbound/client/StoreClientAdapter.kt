@@ -1,8 +1,8 @@
 package com.groom.customer.adapter.outbound.client
 
+import com.groom.customer.adapter.outbound.client.StoreClient
 import com.groom.customer.domain.model.NewStore
 import com.groom.customer.domain.port.CreateStorePort
-import com.groom.customer.adapter.outbound.client.StoreClient
 import org.springframework.stereotype.Component
 import java.util.UUID
 
