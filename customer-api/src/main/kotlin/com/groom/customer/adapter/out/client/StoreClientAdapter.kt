@@ -1,25 +1,23 @@
-package com.groom.customer.outbound.adapter
+package com.groom.customer.adapter.out.client
 
-import com.groom.customer.domain.service.NewStore
-import com.groom.customer.domain.service.StoreFactory
+import com.groom.customer.domain.model.NewStore
+import com.groom.customer.domain.port.CreateStorePort
 import com.groom.customer.outbound.client.StoreClient
-import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 /**
- * 프로덕션 환경용 StoreFactory 구현체
+ * Store 서비스 호출을 위한 Client Adapter.
+ * CreateStorePort를 구현하여 외부 서비스와 Domain을 연결합니다.
  *
- * 실제 Store 서비스(REST API 또는 gRPC)를 호출하여 상점을 생성합니다.
- *
- * @Profile("!test") - test 프로파일이 아닐 때만 활성화
- *                     (local, dev, prod 등에서 사용)
+ * StoreClient 구현체는 프로파일에 따라 자동으로 결정됩니다:
+ * - test: MockStoreClient (테스트용 Mock)
+ * - prod: StoreFeignClient (실제 Feign 클라이언트)
  */
 @Component
-@Profile("!test")
-class StoreFactoryAdapter(
+class StoreClientAdapter(
     private val storeClient: StoreClient,
-) : StoreFactory {
+) : CreateStorePort {
     override fun createNewStore(
         ownerUserId: UUID,
         name: String,

@@ -1,20 +1,21 @@
-package com.groom.customer.outbound.adapter
+package com.groom.customer.adapter.out.security
 
 import com.groom.customer.domain.model.User
-import com.groom.customer.domain.service.TokenProvider
+import com.groom.customer.domain.port.GenerateTokenPort
 import com.groom.customer.security.jwt.AuthorizationData
 import com.groom.customer.security.jwt.JwtProperties
 import com.groom.customer.security.jwt.JwtTokenProvider
 import org.springframework.stereotype.Component
 
 /**
- * JWT 기반 TokenProvider 구현체
+ * JWT 기반 토큰 생성 Adapter.
+ * GenerateTokenPort를 구현하여 JWT 생성 기술과 Domain을 연결합니다.
  */
 @Component
-class JwtTokenProviderAdapter(
+class TokenGeneratorAdapter(
     private val jwtTokenProvider: JwtTokenProvider,
     private val properties: JwtProperties,
-) : TokenProvider {
+) : GenerateTokenPort {
     override fun generateAccessToken(user: User): String =
         jwtTokenProvider.generateAccessToken(
             AuthorizationData(

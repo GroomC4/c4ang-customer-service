@@ -7,7 +7,6 @@ import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.service.UserFactory
 import com.groom.customer.domain.service.UserPolicy
-import com.groom.customer.fixture.NoOpsStoreAdapter
 import com.groom.customer.outbound.repository.UserRepositoryImpl
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode

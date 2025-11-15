@@ -1,12 +1,12 @@
-package com.groom.customer.domain.service
+package com.groom.customer.domain.port
 
 import com.groom.customer.domain.model.User
 
 /**
- * 비밀번호 검증 도메인 서비스
- * 비밀번호 검증 로직을 캡슐화하여 암호화 방식의 세부사항을 숨깁니다.
+ * 비밀번호 검증을 위한 Outbound Port.
+ * Domain이 외부 인프라(Bcrypt, Argon2 등)에 요구하는 계약.
  */
-interface PasswordVerifier {
+interface VerifyPasswordPort {
     /**
      * 사용자의 비밀번호가 일치하는지 검증합니다.
      *

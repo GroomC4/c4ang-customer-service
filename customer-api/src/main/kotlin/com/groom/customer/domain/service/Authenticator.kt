@@ -5,6 +5,10 @@ import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.model.TokenCredentials
 import com.groom.customer.domain.model.User
+import com.groom.customer.domain.port.GenerateTokenPort
+import com.groom.customer.domain.port.LoadRefreshTokenPort
+import com.groom.customer.domain.port.LoadUserPort
+import com.groom.customer.domain.port.SaveRefreshTokenPort
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -14,9 +18,10 @@ import java.time.LocalDateTime
  */
 @Service
 class Authenticator(
-    private val tokenProvider: TokenProvider,
-    private val refreshTokenStore: RefreshTokenStore,
-    private val userReader: UserReader,
+    private val generateTokenPort: GenerateTokenPort,
+    private val loadRefreshTokenPort: LoadRefreshTokenPort,
+    private val saveRefreshTokenPort: SaveRefreshTokenPort,
+    private val loadUserPort: LoadUserPort,
 ) {
     /**
      * 사용자의 인증 정보를 생성하고 저장 또는 갱신합니다.
@@ -31,21 +36,20 @@ class Authenticator(
         now: LocalDateTime = LocalDateTime.now(),
     ): TokenCredentials {
         // 1. 토큰 생성
-        val accessToken = tokenProvider.generateAccessToken(user)
-        val refreshToken = tokenProvider.generateRefreshToken(user)
+        val accessToken = generateTokenPort.generateAccessToken(user)
+        val refreshToken = generateTokenPort.generateRefreshToken(user)
 
         // 2. RefreshToken 저장 또는 갱신 (도메인 로직)
         val userId = user.id
-        val existingRefreshToken = refreshTokenStore.findByUserId(userId)
+        val existingRefreshToken = loadRefreshTokenPort.loadByUserId(userId)
 
-        if (existingRefreshToken.isPresent) {
+        if (existingRefreshToken != null) {
             // 기존 토큰이 있으면 갱신
-            val token = existingRefreshToken.get()
-            token.updateToken(
+            existingRefreshToken.updateToken(
                 newToken = refreshToken,
-                newExpiresAt = now.plusDays(tokenProvider.getRefreshTokenValiditySeconds()),
+                newExpiresAt = now.plusDays(generateTokenPort.getRefreshTokenValiditySeconds()),
             )
-            refreshTokenStore.save(token)
+            saveRefreshTokenPort.save(existingRefreshToken)
         } else {
             // 새로운 토큰 생성
             val newRefreshToken =
@@ -53,16 +57,16 @@ class Authenticator(
                     userId = userId,
                     token = refreshToken,
                     clientIp = clientIp,
-                    expiresAt = now.plusDays(tokenProvider.getRefreshTokenValiditySeconds()),
+                    expiresAt = now.plusDays(generateTokenPort.getRefreshTokenValiditySeconds()),
                 )
-            refreshTokenStore.save(newRefreshToken)
+            saveRefreshTokenPort.save(newRefreshToken)
         }
 
         // 3. 토큰 기반 인증 정보 생성
         return TokenCredentials(
             primaryToken = accessToken,
             secondaryToken = refreshToken,
-            validitySeconds = tokenProvider.getAccessTokenValiditySeconds(),
+            validitySeconds = generateTokenPort.getAccessTokenValiditySeconds(),
         )
     }
 
@@ -76,9 +80,8 @@ class Authenticator(
         val userId = user.id
 
         val refreshToken =
-            refreshTokenStore
-                .findByUserId(userId)
-                .orElseThrow { IllegalArgumentException("로그아웃할 수 없습니다. 유효한 세션이 존재하지 않습니다.") }
+            loadRefreshTokenPort.loadByUserId(userId)
+                ?: throw IllegalArgumentException("로그아웃할 수 없습니다. 유효한 세션이 존재하지 않습니다.")
 
         // 도메인 로직: 이미 무효화된 토큰 확인
         if (refreshToken.token == null) {
@@ -86,7 +89,7 @@ class Authenticator(
         }
 
         refreshToken.invalidate()
-        refreshTokenStore.save(refreshToken)
+        saveRefreshTokenPort.save(refreshToken)
     }
 
     /**
@@ -101,9 +104,8 @@ class Authenticator(
     fun refreshCredentials(refreshToken: String): TokenCredentials {
         // 1. DB에서 Refresh Token 조회
         val storedRefreshToken =
-            refreshTokenStore
-                .findByToken(refreshToken)
-                .orElseThrow { RefreshTokenException.RefreshTokenNotFound(tokenValue = refreshToken) }
+            loadRefreshTokenPort.loadByToken(refreshToken)
+                ?: throw RefreshTokenException.RefreshTokenNotFound(tokenValue = refreshToken)
 
         // 2. Refresh Token 도메인 검증
         if (storedRefreshToken.token == null) {
@@ -115,21 +117,20 @@ class Authenticator(
         }
 
         // 3. JWT 토큰 검증
-        tokenProvider.validateRefreshToken(refreshToken)
+        generateTokenPort.validateRefreshToken(refreshToken)
 
         // 4. 사용자 정보 조회
         val user =
-            userReader
-                .findById(storedRefreshToken.userId)
-                .orElseThrow { UserException.UserNotFound(userId = storedRefreshToken.userId) }
+            loadUserPort.loadById(storedRefreshToken.userId)
+                ?: throw UserException.UserNotFound(userId = storedRefreshToken.userId)
 
         // 5. 새로운 Access Token 생성
-        val accessToken = tokenProvider.generateAccessToken(user)
+        val accessToken = generateTokenPort.generateAccessToken(user)
 
         return TokenCredentials(
             primaryToken = accessToken,
             secondaryToken = null, // Refresh 시에는 새 Refresh Token을 발급하지 않음
-            validitySeconds = tokenProvider.getAccessTokenValiditySeconds(),
+            validitySeconds = generateTokenPort.getAccessTokenValiditySeconds(),
         )
     }
 }

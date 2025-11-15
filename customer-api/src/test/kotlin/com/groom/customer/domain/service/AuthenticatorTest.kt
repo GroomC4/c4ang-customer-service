@@ -5,6 +5,10 @@ import com.groom.customer.common.enums.UserRole
 import com.groom.customer.common.exception.RefreshTokenException
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.model.User
+import com.groom.customer.domain.port.GenerateTokenPort
+import com.groom.customer.domain.port.LoadRefreshTokenPort
+import com.groom.customer.domain.port.LoadUserPort
+import com.groom.customer.domain.port.SaveRefreshTokenPort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
@@ -13,7 +17,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.time.LocalDateTime
-import java.util.Optional
 import java.util.UUID
 
 @UnitTest
@@ -23,15 +26,17 @@ class AuthenticatorTest :
         isolationMode = IsolationMode.InstancePerLeaf
 
         Given("유효한 사용자와 클라이언트 IP가 주어졌을 때") {
-            val tokenProvider = mockk<TokenProvider>()
-            val refreshTokenStore = mockk<RefreshTokenStore>()
-            val userReader = mockk<UserReader>()
+            val generateTokenPort = mockk<GenerateTokenPort>()
+            val loadRefreshTokenPort = mockk<LoadRefreshTokenPort>()
+            val saveRefreshTokenPort = mockk<SaveRefreshTokenPort>()
+            val loadUserPort = mockk<LoadUserPort>()
 
             val authenticator =
                 Authenticator(
-                    tokenProvider = tokenProvider,
-                    refreshTokenStore = refreshTokenStore,
-                    userReader = userReader,
+                    generateTokenPort = generateTokenPort,
+                    loadRefreshTokenPort = loadRefreshTokenPort,
+                    saveRefreshTokenPort = saveRefreshTokenPort,
+                    loadUserPort = loadUserPort,
                 )
 
             val userId = UUID.randomUUID()
@@ -46,12 +51,12 @@ class AuthenticatorTest :
             val accessToken = "access-token-12345"
             val refreshToken = "refresh-token-67890"
 
-            every { tokenProvider.generateAccessToken(user) } returns accessToken
-            every { tokenProvider.generateRefreshToken(user) } returns refreshToken
-            every { tokenProvider.getAccessTokenValiditySeconds() } returns 300L
-            every { tokenProvider.getRefreshTokenValiditySeconds() } returns 3L
-            every { refreshTokenStore.findByUserId(userId) } returns Optional.empty()
-            every { refreshTokenStore.save(any()) } answers { firstArg() }
+            every { generateTokenPort.generateAccessToken(user) } returns accessToken
+            every { generateTokenPort.generateRefreshToken(user) } returns refreshToken
+            every { generateTokenPort.getAccessTokenValiditySeconds() } returns 300L
+            every { generateTokenPort.getRefreshTokenValiditySeconds() } returns 3L
+            every { loadRefreshTokenPort.loadByUserId(userId) } returns null
+            every { saveRefreshTokenPort.save(any()) } answers { firstArg() }
 
             When("인증 자격증명을 생성하면") {
                 val result = authenticator.createAndPersistCredentials(user, clientIp)
@@ -61,23 +66,25 @@ class AuthenticatorTest :
                     result.secondaryToken shouldBe refreshToken
                     result.getValiditySeconds() shouldBe 300L
 
-                    verify(exactly = 1) { tokenProvider.generateAccessToken(user) }
-                    verify(exactly = 1) { tokenProvider.generateRefreshToken(user) }
-                    verify(exactly = 1) { refreshTokenStore.save(any()) }
+                    verify(exactly = 1) { generateTokenPort.generateAccessToken(user) }
+                    verify(exactly = 1) { generateTokenPort.generateRefreshToken(user) }
+                    verify(exactly = 1) { saveRefreshTokenPort.save(any()) }
                 }
             }
         }
 
         Given("이미 리프레시 토큰이 존재하는 사용자가 로그인할 때") {
-            val tokenProvider = mockk<TokenProvider>()
-            val refreshTokenStore = mockk<RefreshTokenStore>()
-            val userReader = mockk<UserReader>()
+            val generateTokenPort = mockk<GenerateTokenPort>()
+            val loadRefreshTokenPort = mockk<LoadRefreshTokenPort>()
+            val saveRefreshTokenPort = mockk<SaveRefreshTokenPort>()
+            val loadUserPort = mockk<LoadUserPort>()
 
             val authenticator =
                 Authenticator(
-                    tokenProvider = tokenProvider,
-                    refreshTokenStore = refreshTokenStore,
-                    userReader = userReader,
+                    generateTokenPort = generateTokenPort,
+                    loadRefreshTokenPort = loadRefreshTokenPort,
+                    saveRefreshTokenPort = saveRefreshTokenPort,
+                    loadUserPort = loadUserPort,
                 )
 
             val userId = UUID.randomUUID()
@@ -95,13 +102,13 @@ class AuthenticatorTest :
             val newAccessToken = "new-access-token"
             val newRefreshToken = "new-refresh-token"
 
-            every { tokenProvider.generateAccessToken(user) } returns newAccessToken
-            every { tokenProvider.generateRefreshToken(user) } returns newRefreshToken
-            every { tokenProvider.getAccessTokenValiditySeconds() } returns 300L
-            every { tokenProvider.getRefreshTokenValiditySeconds() } returns 3L
-            every { refreshTokenStore.findByUserId(userId) } returns Optional.of(existingRefreshToken)
+            every { generateTokenPort.generateAccessToken(user) } returns newAccessToken
+            every { generateTokenPort.generateRefreshToken(user) } returns newRefreshToken
+            every { generateTokenPort.getAccessTokenValiditySeconds() } returns 300L
+            every { generateTokenPort.getRefreshTokenValiditySeconds() } returns 3L
+            every { loadRefreshTokenPort.loadByUserId(userId) } returns existingRefreshToken
             every { existingRefreshToken.updateToken(any(), any()) } returns Unit
-            every { refreshTokenStore.save(any()) } answers { firstArg() }
+            every { saveRefreshTokenPort.save(any()) } answers { firstArg() }
 
             When("새로운 자격증명을 생성하면") {
                 val result = authenticator.createAndPersistCredentials(user, clientIp)
@@ -110,23 +117,25 @@ class AuthenticatorTest :
                     result.primaryToken shouldBe newAccessToken
                     result.secondaryToken shouldBe newRefreshToken
 
-                    verify(exactly = 1) { refreshTokenStore.findByUserId(userId) }
+                    verify(exactly = 1) { loadRefreshTokenPort.loadByUserId(userId) }
                     verify(exactly = 1) { existingRefreshToken.updateToken(any(), any()) }
-                    verify(exactly = 1) { refreshTokenStore.save(any()) }
+                    verify(exactly = 1) { saveRefreshTokenPort.save(any()) }
                 }
             }
         }
 
         Given("유효한 리프레시 토큰이 주어졌을 때") {
-            val tokenProvider = mockk<TokenProvider>()
-            val refreshTokenStore = mockk<RefreshTokenStore>()
-            val userReader = mockk<UserReader>()
+            val generateTokenPort = mockk<GenerateTokenPort>()
+            val loadRefreshTokenPort = mockk<LoadRefreshTokenPort>()
+            val saveRefreshTokenPort = mockk<SaveRefreshTokenPort>()
+            val loadUserPort = mockk<LoadUserPort>()
 
             val authenticator =
                 Authenticator(
-                    tokenProvider = tokenProvider,
-                    refreshTokenStore = refreshTokenStore,
-                    userReader = userReader,
+                    generateTokenPort = generateTokenPort,
+                    loadRefreshTokenPort = loadRefreshTokenPort,
+                    saveRefreshTokenPort = saveRefreshTokenPort,
+                    loadUserPort = loadUserPort,
                 )
 
             val userId = UUID.randomUUID()
@@ -149,11 +158,11 @@ class AuthenticatorTest :
 
             val newAccessToken = "new-access-token"
 
-            every { tokenProvider.validateRefreshToken(refreshTokenValue) } returns Unit
-            every { refreshTokenStore.findByToken(refreshTokenValue) } returns Optional.of(storedRefreshToken)
-            every { userReader.findById(userId) } returns Optional.of(user)
-            every { tokenProvider.generateAccessToken(user) } returns newAccessToken
-            every { tokenProvider.getAccessTokenValiditySeconds() } returns 300L
+            every { generateTokenPort.validateRefreshToken(refreshTokenValue) } returns Unit
+            every { loadRefreshTokenPort.loadByToken(refreshTokenValue) } returns storedRefreshToken
+            every { loadUserPort.loadById(userId) } returns user
+            every { generateTokenPort.generateAccessToken(user) } returns newAccessToken
+            every { generateTokenPort.getAccessTokenValiditySeconds() } returns 300L
 
             When("토큰을 갱신하면") {
                 val result = authenticator.refreshCredentials(refreshTokenValue)
@@ -163,24 +172,26 @@ class AuthenticatorTest :
                     result.secondaryToken shouldBe null
                     result.getValiditySeconds() shouldBe 300L
 
-                    verify(exactly = 1) { tokenProvider.validateRefreshToken(refreshTokenValue) }
-                    verify(exactly = 1) { refreshTokenStore.findByToken(refreshTokenValue) }
-                    verify(exactly = 1) { userReader.findById(userId) }
-                    verify(exactly = 1) { tokenProvider.generateAccessToken(user) }
+                    verify(exactly = 1) { generateTokenPort.validateRefreshToken(refreshTokenValue) }
+                    verify(exactly = 1) { loadRefreshTokenPort.loadByToken(refreshTokenValue) }
+                    verify(exactly = 1) { loadUserPort.loadById(userId) }
+                    verify(exactly = 1) { generateTokenPort.generateAccessToken(user) }
                 }
             }
         }
 
         Given("만료된 리프레시 토큰이 주어졌을 때") {
-            val tokenProvider = mockk<TokenProvider>()
-            val refreshTokenStore = mockk<RefreshTokenStore>()
-            val userReader = mockk<UserReader>()
+            val generateTokenPort = mockk<GenerateTokenPort>()
+            val loadRefreshTokenPort = mockk<LoadRefreshTokenPort>()
+            val saveRefreshTokenPort = mockk<SaveRefreshTokenPort>()
+            val loadUserPort = mockk<LoadUserPort>()
 
             val authenticator =
                 Authenticator(
-                    tokenProvider = tokenProvider,
-                    refreshTokenStore = refreshTokenStore,
-                    userReader = userReader,
+                    generateTokenPort = generateTokenPort,
+                    loadRefreshTokenPort = loadRefreshTokenPort,
+                    saveRefreshTokenPort = saveRefreshTokenPort,
+                    loadUserPort = loadUserPort,
                 )
 
             val refreshTokenValue = "expired-refresh-token"
@@ -193,8 +204,8 @@ class AuthenticatorTest :
                     every { isExpired(any()) } returns true
                 }
 
-            every { tokenProvider.validateRefreshToken(refreshTokenValue) } returns Unit
-            every { refreshTokenStore.findByToken(refreshTokenValue) } returns Optional.of(expiredRefreshToken)
+            every { generateTokenPort.validateRefreshToken(refreshTokenValue) } returns Unit
+            every { loadRefreshTokenPort.loadByToken(refreshTokenValue) } returns expiredRefreshToken
 
             When("토큰을 갱신하려고 하면") {
                 Then("예외가 발생한다") {
@@ -204,21 +215,23 @@ class AuthenticatorTest :
                         }
                     exception.message shouldBe "리프레시 토큰이 만료되었습니다"
 
-                    verify(exactly = 1) { refreshTokenStore.findByToken(refreshTokenValue) }
+                    verify(exactly = 1) { loadRefreshTokenPort.loadByToken(refreshTokenValue) }
                 }
             }
         }
 
         Given("사용자가 로그아웃할 때") {
-            val tokenProvider = mockk<TokenProvider>()
-            val refreshTokenStore = mockk<RefreshTokenStore>()
-            val userReader = mockk<UserReader>()
+            val generateTokenPort = mockk<GenerateTokenPort>()
+            val loadRefreshTokenPort = mockk<LoadRefreshTokenPort>()
+            val saveRefreshTokenPort = mockk<SaveRefreshTokenPort>()
+            val loadUserPort = mockk<LoadUserPort>()
 
             val authenticator =
                 Authenticator(
-                    tokenProvider = tokenProvider,
-                    refreshTokenStore = refreshTokenStore,
-                    userReader = userReader,
+                    generateTokenPort = generateTokenPort,
+                    loadRefreshTokenPort = loadRefreshTokenPort,
+                    saveRefreshTokenPort = saveRefreshTokenPort,
+                    loadUserPort = loadUserPort,
                 )
 
             val userId = UUID.randomUUID()
@@ -232,30 +245,32 @@ class AuthenticatorTest :
                     every { this@mockk.userId } returns userId
                 }
 
-            every { refreshTokenStore.findByUserId(userId) } returns Optional.of(refreshToken)
-            every { refreshTokenStore.save(any()) } answers { firstArg() }
+            every { loadRefreshTokenPort.loadByUserId(userId) } returns refreshToken
+            every { saveRefreshTokenPort.save(any()) } answers { firstArg() }
 
             When("자격증명을 취소하면") {
                 authenticator.revokeCredentials(user)
 
                 Then("리프레시 토큰이 무효화된다") {
-                    verify(exactly = 1) { refreshTokenStore.findByUserId(userId) }
+                    verify(exactly = 1) { loadRefreshTokenPort.loadByUserId(userId) }
                     verify(exactly = 1) { refreshToken.invalidate() }
-                    verify(exactly = 1) { refreshTokenStore.save(refreshToken) }
+                    verify(exactly = 1) { saveRefreshTokenPort.save(refreshToken) }
                 }
             }
         }
 
         Given("리프레시 토큰이 없는 사용자가 로그아웃할 때") {
-            val tokenProvider = mockk<TokenProvider>()
-            val refreshTokenStore = mockk<RefreshTokenStore>()
-            val userReader = mockk<UserReader>()
+            val generateTokenPort = mockk<GenerateTokenPort>()
+            val loadRefreshTokenPort = mockk<LoadRefreshTokenPort>()
+            val saveRefreshTokenPort = mockk<SaveRefreshTokenPort>()
+            val loadUserPort = mockk<LoadUserPort>()
 
             val authenticator =
                 Authenticator(
-                    tokenProvider = tokenProvider,
-                    refreshTokenStore = refreshTokenStore,
-                    userReader = userReader,
+                    generateTokenPort = generateTokenPort,
+                    loadRefreshTokenPort = loadRefreshTokenPort,
+                    saveRefreshTokenPort = saveRefreshTokenPort,
+                    loadUserPort = loadUserPort,
                 )
 
             val userId = UUID.randomUUID()
@@ -264,7 +279,7 @@ class AuthenticatorTest :
                     every { id } returns userId
                 }
 
-            every { refreshTokenStore.findByUserId(userId) } returns Optional.empty()
+            every { loadRefreshTokenPort.loadByUserId(userId) } returns null
 
             When("자격증명을 취소하려고 하면") {
                 Then("예외가 발생한다") {
@@ -274,8 +289,8 @@ class AuthenticatorTest :
                         }
                     exception.message shouldBe "로그아웃할 수 없습니다. 유효한 세션이 존재하지 않습니다."
 
-                    verify(exactly = 1) { refreshTokenStore.findByUserId(userId) }
-                    verify(exactly = 0) { refreshTokenStore.save(any()) }
+                    verify(exactly = 1) { loadRefreshTokenPort.loadByUserId(userId) }
+                    verify(exactly = 0) { saveRefreshTokenPort.save(any()) }
                 }
             }
         }

@@ -85,8 +85,7 @@ tasks.withType<Test> {
 }
 
 tasks.test {
-    useJUnitPlatform {
-    }
+    useJUnitPlatform()
 }
 
 // 통합 테스트 전용 태스크 (Docker Compose 기반)
