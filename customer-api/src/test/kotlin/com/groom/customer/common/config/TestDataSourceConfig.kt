@@ -2,6 +2,7 @@ package com.groom.customer.common.config
 
 import com.groom.customer.configuration.jpa.DataSourceType
 import com.groom.customer.configuration.jpa.DynamicRoutingDataSource
+import com.groom.platform.testSupport.BaseContainerExtension
 import com.zaxxer.hikari.HikariDataSource
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.jdbc.DataSourceBuilder
@@ -14,6 +15,11 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import javax.sql.DataSource
 
+/**
+ * 통합 테스트를 위한 데이터 소스 설정.
+ *
+ * BaseContainerExtension에서 실행된 PostgreSQL Primary/Replica와 Redis에 동적으로 연결합니다.
+ */
 @Profile("test")
 @Configuration
 class TestDataSourceConfig {
@@ -22,10 +28,10 @@ class TestDataSourceConfig {
         DataSourceBuilder
             .create()
             .type(HikariDataSource::class.java)
-            .url(TestDockerComposeContainer.getMasterJdbcUrl())
+            .url(BaseContainerExtension.getPrimaryJdbcUrl())
             .driverClassName("org.postgresql.Driver")
-            .username(TestDockerComposeContainer.POSTGRESQL_USERNAME)
-            .password(TestDockerComposeContainer.POSTGRESQL_PASSWORD)
+            .username("test")
+            .password("test")
             .build()
 
     @Bean
@@ -33,10 +39,10 @@ class TestDataSourceConfig {
         DataSourceBuilder
             .create()
             .type(HikariDataSource::class.java)
-            .url(TestDockerComposeContainer.getReplicaJdbcUrl())
+            .url(BaseContainerExtension.getReplicaJdbcUrl())
             .driverClassName("org.postgresql.Driver")
-            .username(TestDockerComposeContainer.POSTGRESQL_USERNAME)
-            .password(TestDockerComposeContainer.POSTGRESQL_PASSWORD)
+            .username("test")
+            .password("test")
             .build()
 
     @Bean
@@ -65,7 +71,7 @@ class TestDataSourceConfig {
     @Bean
     fun redisConnectionFactory(): RedisConnectionFactory =
         LettuceConnectionFactory(
-            TestDockerComposeContainer.getRedisHost(),
-            TestDockerComposeContainer.getRedisMappedPort(),
+            BaseContainerExtension.getRedisHost(),
+            BaseContainerExtension.getRedisPort(),
         )
 }
