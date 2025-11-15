@@ -7,15 +7,15 @@ import com.groom.customer.domain.model.Address
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber
 import com.groom.customer.domain.model.Username
+import com.groom.customer.domain.port.SaveUserPort
 import com.groom.customer.domain.service.UserFactory
 import com.groom.customer.domain.service.UserPolicy
-import com.groom.customer.outbound.repository.UserRepositoryImpl
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class RegisterCustomerService(
-    private val userRepository: UserRepositoryImpl,
+    private val saveUserPort: SaveUserPort,
     private val userPolicy: UserPolicy,
     private val userFactory: UserFactory,
 ) {
@@ -36,7 +36,7 @@ class RegisterCustomerService(
                     passwordHash = command.rawPassword,
                     defaultAddress = address,
                     defaultPhoneNumber = phoneNumber,
-                ).let(userRepository::save)
+                ).let(saveUserPort::save)
 
         return RegisterCustomerResult(
             userId = newCustomer.id!!.toString(),

@@ -1,12 +1,12 @@
 package com.groom.customer.fixture
 
-import com.groom.customer.outbound.client.ProductListResponse
-import com.groom.customer.outbound.client.ProductResponse
-import com.groom.customer.outbound.client.ProductStatus
-import com.groom.customer.outbound.client.StoreClient
-import com.groom.customer.outbound.client.StoreListResponse
-import com.groom.customer.outbound.client.StoreResponse
-import com.groom.customer.outbound.client.StoreStatus
+import com.groom.customer.adapter.outbound.client.ProductListResponse
+import com.groom.customer.adapter.outbound.client.ProductResponse
+import com.groom.customer.adapter.outbound.client.ProductStatus
+import com.groom.customer.adapter.outbound.client.StoreClient
+import com.groom.customer.adapter.outbound.client.StoreListResponse
+import com.groom.customer.adapter.outbound.client.StoreResponse
+import com.groom.customer.adapter.outbound.client.StoreStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Profile

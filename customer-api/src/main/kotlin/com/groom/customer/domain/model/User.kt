@@ -2,7 +2,7 @@ package com.groom.customer.domain.model
 
 import com.groom.customer.common.enums.UserRole
 import com.groom.customer.configuration.jpa.CreatedAndUpdatedAtAuditEntity
-import com.groom.customer.outbound.adapter.BcryptHashConverter
+import com.groom.customer.adapter.outbound.security.BcryptHashConverter
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Convert

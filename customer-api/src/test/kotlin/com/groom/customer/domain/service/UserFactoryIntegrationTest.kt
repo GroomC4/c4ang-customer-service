@@ -6,8 +6,8 @@ import com.groom.customer.domain.model.Address
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber
 import com.groom.customer.domain.model.Username
-import com.groom.customer.outbound.repository.UserProfileRepositoryImpl
-import com.groom.customer.outbound.repository.UserRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserProfileRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

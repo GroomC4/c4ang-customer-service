@@ -7,7 +7,7 @@ import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.service.UserFactory
 import com.groom.customer.domain.service.UserPolicy
-import com.groom.customer.outbound.repository.UserRepositoryImpl
+import com.groom.customer.domain.port.SaveUserPort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
@@ -27,12 +27,12 @@ class RegisterCustomerServiceTest :
         isolationMode = IsolationMode.InstancePerLeaf
 
         Given("유효한 회원가입 정보가 주어졌을 때") {
-            val userRepository = mockk<UserRepositoryImpl>()
+            val saveUserPort = mockk<SaveUserPort>()
             val userPolicy = mockk<UserPolicy>()
             val userFactory = mockk<UserFactory>()
             val registerCustomerService =
                 RegisterCustomerService(
-                    userRepository = userRepository,
+                    saveUserPort = saveUserPort,
                     userPolicy = userPolicy,
                     userFactory = userFactory,
                 )
@@ -76,7 +76,7 @@ class RegisterCustomerServiceTest :
                     every { createdAt } returns java.time.LocalDateTime.now()
                 }
 
-            every { userRepository.save(createdUser) } returns savedUser
+            every { saveUserPort.save(createdUser) } returns savedUser
 
             When("회원가입을 진행하면") {
                 val result = registerCustomerService.register(command)
@@ -94,18 +94,18 @@ class RegisterCustomerServiceTest :
                 Then("중복 확인, 팩토리 생성, 저장이 각각 한 번씩 호출된다") {
                     verify(exactly = 1) { userPolicy.checkAlreadyRegister(command.email, UserRole.CUSTOMER) }
                     verify(exactly = 1) { userFactory.createNewCustomer(any(), any(), any(), any(), any()) }
-                    verify(exactly = 1) { userRepository.save(createdUser) }
+                    verify(exactly = 1) { saveUserPort.save(createdUser) }
                 }
             }
         }
 
         Given("이미 가입한 이메일로 회원가입을 시도할 때") {
-            val userRepository = mockk<UserRepositoryImpl>()
+            val saveUserPort = mockk<SaveUserPort>()
             val userPolicy = mockk<UserPolicy>()
             val userFactory = mockk<UserFactory>()
             val registerCustomerService =
                 RegisterCustomerService(
-                    userRepository = userRepository,
+                    saveUserPort = saveUserPort,
                     userPolicy = userPolicy,
                     userFactory = userFactory,
                 )
@@ -132,18 +132,18 @@ class RegisterCustomerServiceTest :
 
                     verify(exactly = 1) { userPolicy.checkAlreadyRegister(command.email, UserRole.CUSTOMER) }
                     verify(exactly = 0) { userFactory.createNewCustomer(any(), any(), any(), any(), any()) }
-                    verify(exactly = 0) { userRepository.save(any()) }
+                    verify(exactly = 0) { saveUserPort.save(any()) }
                 }
             }
         }
 
         Given("여러 명의 사용자가 동시에 회원가입을 진행할 때") {
-            val userRepository = mockk<UserRepositoryImpl>()
+            val saveUserPort = mockk<SaveUserPort>()
             val userPolicy = mockk<UserPolicy>()
             val userFactory = mockk<UserFactory>()
             val registerCustomerService =
                 RegisterCustomerService(
-                    userRepository = userRepository,
+                    saveUserPort = saveUserPort,
                     userPolicy = userPolicy,
                     userFactory = userFactory,
                 )
@@ -195,7 +195,7 @@ class RegisterCustomerServiceTest :
                         every { createdAt } returns java.time.LocalDateTime.now()
                     }
 
-                every { userRepository.save(createdUser) } returns savedUser
+                every { saveUserPort.save(createdUser) } returns savedUser
             }
 
             When("각각 회원가입을 진행하면") {
@@ -214,7 +214,7 @@ class RegisterCustomerServiceTest :
                         verify(exactly = 1) { userPolicy.checkAlreadyRegister(command.email, UserRole.CUSTOMER) }
                     }
                     verify(exactly = 2) { userFactory.createNewCustomer(any(), any(), any(), any(), any()) }
-                    verify(exactly = 2) { userRepository.save(any()) }
+                    verify(exactly = 2) { saveUserPort.save(any()) }
                 }
             }
         }
