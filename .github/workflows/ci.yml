@@ -64,4 +64,60 @@ jobs:
       id-token: write
       contents: read
     secrets: inherit
+    # 다음 Job이 결과를 받을 수 있도록 ID 설정
+    id: ecr_push_result
     uses: GroomC4/c4ang-platform-core/.github/workflows/reusable-ecr-push.yml@v1.0.0
+
+  call-config-update: # CD Trigger Job 시작
+    name: ArgoCD CD Trigger (Update Infra Config)
+    runs-on: ubuntu-latest
+    needs: call-ecr-push
+    if: success() && startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Set Variables and Get Image Tag
+        run: |
+          # 1. 이전 reusable-ecr-push.yml의 Output에서 이미지 태그를 가져와 환경 변수로 설정
+          NEW_TAG=${{ needs.ecr_push_result.outputs.image_tag }}
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          
+          # 2. GitHub 레포지토리 이름에서 서비스 이름 추출 (재사용성 로직)
+          SERVICE_SLUG=$(echo ${{ github.repository }} | cut -d'/' -f2 | sed 's/c4ang-//')
+          SERVICE_NAME=$(echo "$SERVICE_SLUG" | sed 's/-service//')
+          
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+
+      # 1. yq 설치 (YAML 파일 편집 도구)
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      # 2. Config Repo Checkout (c4ang-infra 레포지토리)
+      - name: Checkout Config Repository (c4ang-infra)
+        uses: actions/checkout@v4
+        with:
+          repository: GroomC4/c4ang-infra
+          path: config-repo # 클론되는 로컬 디렉토리 이름
+          token: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
+
+      # 3. Helm values.yaml 업데이트
+      - name: Update Helm values.yaml
+        working-directory: config-repo # 클론된 'config-repo' 디렉토리 내부에서 작업
+        run: |
+          SERVICE_SLUG="${{ env.SERVICE_NAME }}-service" 
+          VALUES_FILE="helm/services/$SERVICE_SLUG/values.yaml" 
+          
+          echo "Updating file: $VALUES_FILE with tag: ${{ env.NEW_TAG }}"
+          
+          # yq를 사용하여 'image.tag' 필드 업데이트
+          yq e ".image.tag = \"${{ env.NEW_TAG }}\"" -i $VALUES_FILE
+
+      # 4. Commit 및 Push (ArgoCD 트리거)
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          repository: config-repo
+          commit_message: "chore(cd): Update ${{ env.SERVICE_NAME }} image to ${{ env.NEW_TAG }} [skip ci]"
+          branch: main
