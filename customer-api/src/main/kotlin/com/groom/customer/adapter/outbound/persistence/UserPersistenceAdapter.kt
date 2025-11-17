@@ -1,6 +1,5 @@
 package com.groom.customer.adapter.outbound.persistence
 
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.port.LoadUserPort
@@ -14,7 +13,7 @@ import java.util.UUID
  */
 @Component
 class UserPersistenceAdapter(
-    private val userRepository: UserRepositoryImpl,
+    private val userRepository: UserRepository,
 ) : LoadUserPort,
     SaveUserPort {
     override fun loadByEmail(email: String): User? =

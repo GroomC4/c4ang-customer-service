@@ -3,7 +3,7 @@ package com.groom.customer.adapter.inbound.web
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.groom.customer.adapter.inbound.web.dto.RegisterOwnerRequest
 import com.groom.customer.adapter.inbound.web.dto.SignupCustomerRequest
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.domain.model.UserRole
 import org.junit.jupiter.api.AfterEach
@@ -29,7 +29,7 @@ class SignupIntegrationTest {
     private lateinit var objectMapper: ObjectMapper
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
 
     // 각 테스트에서 생성한 이메일 목록을 추적
     private val createdEmails = mutableListOf<String>()

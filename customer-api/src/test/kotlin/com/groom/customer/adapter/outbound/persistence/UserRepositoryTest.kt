@@ -10,13 +10,12 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
-import org.springframework.test.context.jdbc.Sql
 
 @IntegrationTest
 @DisplayName("UserRepositoryImpl CRUD 테스트")
-class UserRepositoryImplTest {
+class UserRepositoryTest {
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
 
     @AfterEach
     fun cleanup() {

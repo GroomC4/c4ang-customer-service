@@ -1,9 +1,11 @@
 package com.groom.customer.adapter.outbound.persistence
 
+import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.model.UserRole
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
@@ -14,13 +16,19 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @IntegrationTest
-@DisplayName("RefreshTokenRepositoryImpl CRUD 테스트")
-class RefreshTokenRepositoryImplTest {
+@DisplayName("RefreshTokenRepository CRUD 테스트")
+class RefreshTokenRepositoryTest {
     @Autowired
-    private lateinit var refreshTokenRepository: RefreshTokenRepositoryImpl
+    private lateinit var refreshTokenRepository: RefreshTokenRepository
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var entityManager: EntityManager
+
+    @Autowired
+    private lateinit var transactionApplier: TransactionApplier
 
     @AfterEach
     fun cleanup() {
@@ -66,8 +74,8 @@ class RefreshTokenRepositoryImplTest {
         }
 
         @Test
-        @DisplayName("같은 사용자의 기존 토큰은 덮어쓰기된다")
-        fun `should overwrite existing token for same user`() {
+        @DisplayName("같은 사용자의 기존 토큰은 업데이트하여 재사용한다")
+        fun `should update existing token for same user`() {
             // given
             val user = createTestUser()
             val oldToken =
@@ -77,21 +85,17 @@ class RefreshTokenRepositoryImplTest {
                     expiresAt = LocalDateTime.now().plusDays(7),
                     clientIp = "127.0.0.1",
                 )
-            refreshTokenRepository.save(oldToken)
+            val savedToken = refreshTokenRepository.save(oldToken)
 
-            // when
-            val newToken =
-                RefreshToken(
-                    userId = user.id,
-                    token = "new_token",
-                    expiresAt = LocalDateTime.now().plusDays(7),
-                    clientIp = "127.0.0.2",
-                )
-            refreshTokenRepository.save(newToken)
+            // when - 같은 엔티티를 업데이트
+            savedToken.updateToken("new_token", LocalDateTime.now().plusDays(14))
+            refreshTokenRepository.save(savedToken)
 
-            // then
+            // then - user_id는 UNIQUE 제약조건이므로 한 사용자당 하나의 토큰만 존재
             val tokens = refreshTokenRepository.findAll()
-            assertThat(tokens).hasSize(2) // 새 토큰이 추가됨
+            assertThat(tokens).hasSize(1)
+            assertThat(tokens[0].token).isEqualTo("new_token")
+            assertThat(tokens[0].userId).isEqualTo(user.id)
         }
     }
 
@@ -179,13 +183,20 @@ class RefreshTokenRepositoryImplTest {
                     clientIp = "127.0.0.1",
                 )
             val savedToken = refreshTokenRepository.save(refreshToken)
+            refreshTokenRepository.flush()
+            val tokenId = savedToken.id
 
             // when
             savedToken.invalidate()
             refreshTokenRepository.save(savedToken)
+            refreshTokenRepository.flush() // 즉시 DB에 반영
+            entityManager.clear() // 영속성 컨텍스트 초기화
 
-            // then
-            val foundToken = refreshTokenRepository.findById(savedToken.id).get()
+            // then - Primary DB에서 실제 반영된 데이터 검증
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findById(tokenId).get()
+                }
             assertThat(foundToken.token).isNull()
         }
 
@@ -203,16 +214,21 @@ class RefreshTokenRepositoryImplTest {
                     clientIp = "127.0.0.1",
                 )
             val savedToken = refreshTokenRepository.save(refreshToken)
+            refreshTokenRepository.flush()
             val tokenId = savedToken.id
 
             // when
             val newExpiry = LocalDateTime.now().plusDays(14)
             savedToken.updateToken("new_token", newExpiry)
-            refreshTokenRepository.saveAndFlush(savedToken) // 명시적 flush
+            refreshTokenRepository.save(savedToken)
+            refreshTokenRepository.flush() // 즉시 DB에 반영
+            entityManager.clear() // 영속성 컨텍스트 초기화
 
-            // then
-            refreshTokenRepository.flush()
-            val foundToken = refreshTokenRepository.findById(tokenId).get()
+            // then - Primary DB에서 실제 반영된 데이터 검증
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findById(tokenId).get()
+                }
             assertThat(foundToken.token).isEqualTo("new_token")
             assertThat(foundToken.expiresAt).isAfter(originalExpiry)
         }
@@ -234,43 +250,67 @@ class RefreshTokenRepositoryImplTest {
                     clientIp = "127.0.0.1",
                 )
             val savedToken = refreshTokenRepository.save(refreshToken)
+            refreshTokenRepository.flush()
+            val tokenId = savedToken.id
 
             // when
             refreshTokenRepository.delete(savedToken)
+            refreshTokenRepository.flush() // 즉시 DB에 반영
+            entityManager.clear() // 영속성 컨텍스트 초기화
 
-            // then
-            val foundToken = refreshTokenRepository.findById(savedToken.id)
+            // then - Primary DB에서 실제 삭제 확인
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findById(tokenId)
+                }
             assertThat(foundToken).isEmpty
         }
 
         @Test
-        @DisplayName("사용자의 모든 리프레시 토큰을 삭제할 수 있다")
-        fun `should delete all tokens for user`() {
-            // given
-            val user = createTestUser()
+        @DisplayName("사용자 ID로 리프레시 토큰을 삭제할 수 있다")
+        fun `should delete refresh token by user id`() {
+            // given - 각각 다른 사용자 생성
+            val user1 = createTestUser()
+            val user2 =
+                User(
+                    username = "테스트유저2",
+                    email = "test2@example.com",
+                    passwordHash = "password",
+                    role = UserRole.CUSTOMER,
+                )
+            userRepository.save(user2)
+            userRepository.flush()
+
             val token1 =
                 RefreshToken(
-                    userId = user.id,
+                    userId = user1.id,
                     token = "token1",
                     expiresAt = LocalDateTime.now().plusDays(7),
                     clientIp = "127.0.0.1",
                 )
             val token2 =
                 RefreshToken(
-                    userId = user.id,
+                    userId = user2.id,
                     token = "token2",
                     expiresAt = LocalDateTime.now().plusDays(7),
                     clientIp = "127.0.0.2",
                 )
             refreshTokenRepository.saveAll(listOf(token1, token2))
+            refreshTokenRepository.flush()
 
-            // when
-            val tokensToDelete = refreshTokenRepository.findByUserId(user.id)
+            // when - user1의 토큰만 삭제
+            val tokensToDelete = refreshTokenRepository.findByUserId(user1.id)
             tokensToDelete.ifPresent { refreshTokenRepository.delete(it) }
+            refreshTokenRepository.flush() // 즉시 DB에 반영
+            entityManager.clear() // 영속성 컨텍스트 초기화
 
-            // then
-            val remainingTokens = refreshTokenRepository.findAll()
-            assertThat(remainingTokens.filter { it.userId == user.id }).hasSize(1)
+            // then - Primary DB에서 실제 삭제 확인: user1의 토큰은 삭제되고 user2의 토큰만 남음
+            val remainingTokens =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findAll()
+                }
+            assertThat(remainingTokens).hasSize(1)
+            assertThat(remainingTokens[0].userId).isEqualTo(user2.id)
         }
     }
 

@@ -1,6 +1,5 @@
 package com.groom.customer.adapter.outbound.persistence
 
-import com.groom.customer.adapter.outbound.persistence.RefreshTokenRepositoryImpl
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.port.LoadRefreshTokenPort
 import com.groom.customer.domain.port.SaveRefreshTokenPort
@@ -13,7 +12,7 @@ import java.util.UUID
  */
 @Component
 class RefreshTokenPersistenceAdapter(
-    private val refreshTokenRepository: RefreshTokenRepositoryImpl,
+    private val refreshTokenRepository: RefreshTokenRepository,
 ) : LoadRefreshTokenPort,
     SaveRefreshTokenPort {
     override fun loadByUserId(userId: UUID): RefreshToken? =

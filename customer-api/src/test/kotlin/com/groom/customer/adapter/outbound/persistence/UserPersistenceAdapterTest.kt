@@ -16,7 +16,7 @@ import java.util.UUID
 @UnitTest
 @DisplayName("UserPersistenceAdapter 단위 테스트")
 class UserPersistenceAdapterTest {
-    private val userRepository: UserRepositoryImpl = mockk()
+    private val userRepository: UserRepository = mockk()
     private val adapter = UserPersistenceAdapter(userRepository)
 
     @Nested

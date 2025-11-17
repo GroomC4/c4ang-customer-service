@@ -4,7 +4,7 @@ import com.auth0.jwt.JWT
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.groom.customer.adapter.inbound.web.dto.LoginRequest
 import com.groom.customer.adapter.inbound.web.dto.SignupCustomerRequest
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.application.service.CustomerAuthenticationService
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.configuration.jwt.JwtProperties
@@ -41,7 +41,7 @@ class CustomerAuthenticationControllerIntegrationTest {
     private lateinit var customerLoginService: CustomerAuthenticationService
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
 
     @Autowired
     private lateinit var jwtProperties: JwtProperties

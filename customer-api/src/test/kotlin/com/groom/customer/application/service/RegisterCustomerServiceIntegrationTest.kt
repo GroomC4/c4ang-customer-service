@@ -1,10 +1,10 @@
 package com.groom.customer.application.service
 
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.application.dto.RegisterCustomerCommand
 import com.groom.customer.common.annotation.IntegrationTest
-import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.UserException
+import com.groom.customer.domain.model.UserRole
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -20,7 +20,7 @@ class RegisterCustomerServiceIntegrationTest {
     private lateinit var registerCustomerService: RegisterCustomerService
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
 
     // 각 테스트에서 생성한 이메일 목록을 추적
     private val createdEmails = mutableListOf<String>()

@@ -17,7 +17,6 @@ import javax.sql.DataSource
 @Configuration
 @EnableJpaRepositories(
     basePackages = ["com.groom.customer"],
-    repositoryImplementationPostfix = "RepositoryImpl",
     entityManagerFactoryRef = "entityManagerFactory",
     transactionManagerRef = "transactionManager",
 )

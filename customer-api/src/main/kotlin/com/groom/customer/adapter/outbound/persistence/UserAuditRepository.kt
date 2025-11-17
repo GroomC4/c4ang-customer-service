@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface UserAuditRepositoryImpl : JpaRepository<UserAudit, UUID>
+interface UserAuditRepository : JpaRepository<UserAudit, UUID>

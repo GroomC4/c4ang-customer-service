@@ -7,7 +7,7 @@ import java.util.Optional
 import java.util.UUID
 
 @Repository
-interface UserAddressRepositoryImpl : JpaRepository<UserAddress, UUID> {
+interface UserAddressRepository : JpaRepository<UserAddress, UUID> {
     fun findByUser_Id(userId: UUID): List<UserAddress>
 
     fun findByUser_IdAndLabel(

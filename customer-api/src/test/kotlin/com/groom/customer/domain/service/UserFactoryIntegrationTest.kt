@@ -1,7 +1,7 @@
 package com.groom.customer.domain.service
 
-import com.groom.customer.adapter.outbound.persistence.UserProfileRepositoryImpl
-import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
+import com.groom.customer.adapter.outbound.persistence.UserProfileRepository
+import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.common.TransactionApplier
 import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.domain.model.Address
@@ -24,10 +24,10 @@ class UserFactoryIntegrationTest {
     private lateinit var userFactory: UserFactory
 
     @Autowired
-    private lateinit var userRepository: UserRepositoryImpl
+    private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var userProfileRepository: UserProfileRepositoryImpl
+    private lateinit var userProfileRepository: UserProfileRepository
 
     @Autowired
     private lateinit var transactionApplier: TransactionApplier
