@@ -15,7 +15,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       checks: write
     steps:
       - name: Checkout code
@@ -62,7 +62,7 @@ jobs:
     # 요구하는 모든 권한(두 Job의 권한 포함) 부여
     permissions:
       id-token: write # AWS OIDC 인증용
-      contents: read
+      contents: write
 
     secrets: inherit # AWS_ROLE_TO_ASSUME, GROOM_GITHUB_ACTION_TOKEN 등 전달
 
