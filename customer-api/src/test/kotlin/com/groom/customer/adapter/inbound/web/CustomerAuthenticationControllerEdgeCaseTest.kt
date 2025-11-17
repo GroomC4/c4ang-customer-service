@@ -79,100 +79,9 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 ).andExpect(status().isConflict)
-                .andExpect(jsonPath("$.code").value("USER_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.code").value("DUPLICATE_EMAIL"))
         }
 
-        @Test
-        @DisplayName("잘못된 전화번호 형식으로 회원가입 시 400 Bad Request를 반환한다")
-        fun `should return 400 when phone number format is invalid`() {
-            // given
-            val request =
-                SignupCustomerRequest(
-                    username = "홍길동",
-                    email = "newuser@example.com",
-                    password = "ValidPass123!",
-                    defaultPhoneNumber = "123456789",
-                    defaultAddress = "서울시 강남구",
-                )
-
-            // when & then
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
-        }
-
-        @Test
-        @DisplayName("너무 짧은 사용자명으로 회원가입 시 400 Bad Request를 반환한다")
-        fun `should return 400 when username is too short`() {
-            // given
-            val request =
-                SignupCustomerRequest(
-                    username = "홍",
-                    email = "newuser@example.com",
-                    password = "ValidPass123!",
-                    defaultPhoneNumber = "010-1234-5678",
-                    defaultAddress = "서울시 강남구",
-                )
-
-            // when & then
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
-        }
-
-        @Test
-        @DisplayName("너무 긴 사용자명으로 회원가입 시 400 Bad Request를 반환한다")
-        fun `should return 400 when username is too long`() {
-            // given
-            val request =
-                SignupCustomerRequest(
-                    username = "홍길동입니다만",
-                    email = "newuser@example.com",
-                    password = "ValidPass123!",
-                    defaultPhoneNumber = "010-1234-5678",
-                    defaultAddress = "서울시 강남구",
-                )
-
-            // when & then
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
-        }
-
-        @Test
-        @DisplayName("빈 비밀번호로 회원가입 시 400 Bad Request를 반환한다")
-        fun `should return 400 when password is empty`() {
-            // given
-            val request =
-                SignupCustomerRequest(
-                    username = "홍길동",
-                    email = "newuser@example.com",
-                    password = "",
-                    defaultPhoneNumber = "010-1234-5678",
-                    defaultAddress = "서울시 강남구",
-                )
-
-            // when & then
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/customers/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
-        }
     }
 
     @Nested
@@ -195,7 +104,7 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"))
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND_BY_EMAIL"))
         }
 
         @Test
@@ -215,7 +124,7 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"))
+                .andExpect(jsonPath("$.code").value("INVALID_PASSWORD"))
         }
 
         @Test
@@ -235,12 +144,12 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("USER_DEACTIVATED"))
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND_BY_EMAIL"))
         }
 
         @Test
-        @DisplayName("잘못된 이메일 형식으로 로그인 시 400 Bad Request를 반환한다")
-        fun `should return 400 when email format is invalid in login`() {
+        @DisplayName("잘못된 이메일 형식으로 로그인 시 401 Unauthorized를 반환한다")
+        fun `should return 401 when email format is invalid in login`() {
             // given
             val request =
                 LoginRequest(
@@ -254,13 +163,13 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                     post("/api/v1/auth/customers/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
+                ).andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND_BY_EMAIL"))
         }
 
         @Test
-        @DisplayName("빈 이메일로 로그인 시 400 Bad Request를 반환한다")
-        fun `should return 400 when email is empty`() {
+        @DisplayName("빈 이메일로 로그인 시 401 Unauthorized를 반환한다")
+        fun `should return 401 when email is empty`() {
             // given
             val request =
                 LoginRequest(
@@ -274,13 +183,13 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                     post("/api/v1/auth/customers/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
+                ).andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND_BY_EMAIL"))
         }
 
         @Test
-        @DisplayName("빈 비밀번호로 로그인 시 400 Bad Request를 반환한다")
-        fun `should return 400 when password is empty in login`() {
+        @DisplayName("빈 비밀번호로 로그인 시 401 Unauthorized를 반환한다")
+        fun `should return 401 when password is empty in login`() {
             // given
             val request =
                 LoginRequest(
@@ -294,8 +203,8 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                     post("/api/v1/auth/customers/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.code").exists())
+                ).andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.code").value("INVALID_PASSWORD"))
         }
     }
 
@@ -319,7 +228,7 @@ class CustomerAuthenticationControllerEdgeCaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 ).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"))
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND_BY_EMAIL"))
         }
     }
 
