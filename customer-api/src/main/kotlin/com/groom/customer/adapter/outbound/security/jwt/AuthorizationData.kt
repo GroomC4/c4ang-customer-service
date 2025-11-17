@@ -1,4 +1,4 @@
-package com.groom.customer.security.jwt
+package com.groom.customer.adapter.outbound.security.jwt
 
 data class AuthorizationData(
     val id: String,

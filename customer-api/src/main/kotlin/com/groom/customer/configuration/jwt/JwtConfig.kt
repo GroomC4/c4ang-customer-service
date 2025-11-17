@@ -1,4 +1,4 @@
-package com.groom.customer.security.jwt
+package com.groom.customer.configuration.jwt
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean

@@ -1,6 +1,6 @@
 package com.groom.customer.adapter.outbound.security
 
-import com.groom.customer.security.jwt.JwtProperties
+import com.groom.customer.configuration.jwt.JwtProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName

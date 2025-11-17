@@ -1,9 +1,9 @@
 package com.groom.customer.adapter.outbound.security
 
 import com.auth0.jwt.JWT
-import com.groom.customer.security.jwt.AuthorizationData
-import com.groom.customer.security.jwt.JwtProperties
-import com.groom.customer.security.jwt.JwtTokenProvider
+import com.groom.customer.adapter.outbound.security.jwt.AuthorizationData
+import com.groom.customer.adapter.outbound.security.jwt.JwtTokenProvider
+import com.groom.customer.configuration.jwt.JwtProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName

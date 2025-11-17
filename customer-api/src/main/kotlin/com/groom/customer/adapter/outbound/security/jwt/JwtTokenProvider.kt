@@ -1,7 +1,8 @@
-package com.groom.customer.security.jwt
+package com.groom.customer.adapter.outbound.security.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.groom.customer.configuration.jwt.JwtProperties
 import org.springframework.stereotype.Component
 import java.time.Clock
 import java.time.Instant

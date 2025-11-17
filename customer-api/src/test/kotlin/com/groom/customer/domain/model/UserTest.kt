@@ -1,7 +1,7 @@
 package com.groom.customer.domain.model
 
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.service.UserFactory
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.nulls.shouldNotBeNull

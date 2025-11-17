@@ -1,4 +1,4 @@
-package com.groom.customer.common.util
+package com.groom.customer.adapter.inbound.web.util
 
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component

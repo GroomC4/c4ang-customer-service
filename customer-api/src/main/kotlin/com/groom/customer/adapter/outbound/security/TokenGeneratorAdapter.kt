@@ -1,10 +1,10 @@
 package com.groom.customer.adapter.outbound.security
 
+import com.groom.customer.adapter.outbound.security.jwt.AuthorizationData
+import com.groom.customer.adapter.outbound.security.jwt.JwtTokenProvider
+import com.groom.customer.configuration.jwt.JwtProperties
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.port.GenerateTokenPort
-import com.groom.customer.security.jwt.AuthorizationData
-import com.groom.customer.security.jwt.JwtProperties
-import com.groom.customer.security.jwt.JwtTokenProvider
 import org.springframework.stereotype.Component
 
 /**

@@ -1,4 +1,4 @@
-package com.groom.customer.common.idempotency
+package com.groom.customer.configuration.idempotency
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.redis.core.StringRedisTemplate

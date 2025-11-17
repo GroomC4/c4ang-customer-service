@@ -1,6 +1,6 @@
 package com.groom.customer.fixture
 
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.model.UserProfile
 import java.time.LocalDateTime

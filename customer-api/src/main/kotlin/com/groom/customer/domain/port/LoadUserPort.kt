@@ -1,7 +1,7 @@
 package com.groom.customer.domain.port
 
-import com.groom.customer.common.enums.UserRole
 import com.groom.customer.domain.model.User
+import com.groom.customer.domain.model.UserRole
 import java.util.UUID
 
 /**

@@ -3,7 +3,7 @@ package com.groom.customer.application.service
 import com.groom.customer.application.dto.LoginCommand
 import com.groom.customer.application.dto.LogoutCommand
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.AuthenticationException
 import com.groom.customer.common.exception.PermissionException
 import com.groom.customer.common.exception.UserException

@@ -1,4 +1,4 @@
-package com.groom.customer.common.idempotency
+package com.groom.customer.configuration.idempotency
 
 import com.groom.customer.common.annotation.UnitTest
 import io.kotest.core.spec.IsolationMode

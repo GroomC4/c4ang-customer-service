@@ -7,7 +7,7 @@ import com.groom.customer.application.dto.LoginCommand
 import com.groom.customer.application.service.CustomerAuthenticationService
 import com.groom.customer.application.service.OwnerAuthenticationService
 import com.groom.customer.common.annotation.IntegrationTest
-import com.groom.customer.security.jwt.JwtProperties
+import com.groom.customer.configuration.jwt.JwtProperties
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

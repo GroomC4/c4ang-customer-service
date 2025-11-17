@@ -1,7 +1,7 @@
 package com.groom.customer.domain.service
 
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.model.Address
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber

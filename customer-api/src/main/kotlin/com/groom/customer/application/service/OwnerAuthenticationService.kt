@@ -4,9 +4,9 @@ import com.groom.customer.application.dto.LoginCommand
 import com.groom.customer.application.dto.LoginResult
 import com.groom.customer.application.dto.LogoutCommand
 import com.groom.customer.application.dto.toLoginResult
-import com.groom.customer.common.enums.UserRole
 import com.groom.customer.common.exception.AuthenticationException
 import com.groom.customer.common.exception.UserException
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.port.LoadUserPort
 import com.groom.customer.domain.port.VerifyPasswordPort
 import com.groom.customer.domain.service.Authenticator

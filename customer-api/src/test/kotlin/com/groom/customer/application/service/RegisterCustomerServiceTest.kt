@@ -2,7 +2,7 @@ package com.groom.customer.application.service
 
 import com.groom.customer.application.dto.RegisterCustomerCommand
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.port.SaveUserPort

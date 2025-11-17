@@ -1,6 +1,6 @@
 package com.groom.customer.application.dto
 
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import java.time.LocalDateTime
 
 /**

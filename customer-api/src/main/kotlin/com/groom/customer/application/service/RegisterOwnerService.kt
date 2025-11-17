@@ -2,9 +2,9 @@ package com.groom.customer.application.service
 
 import com.groom.customer.application.dto.RegisterOwnerCommand
 import com.groom.customer.application.dto.RegisterOwnerResult
-import com.groom.customer.common.enums.UserRole
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.model.Username
 import com.groom.customer.domain.port.SaveUserPort
 import com.groom.customer.domain.service.UserFactory

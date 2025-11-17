@@ -3,7 +3,7 @@ package com.groom.customer.application.service
 import com.groom.customer.adapter.outbound.persistence.UserRepositoryImpl
 import com.groom.customer.application.dto.RegisterCustomerCommand
 import com.groom.customer.common.annotation.IntegrationTest
-import com.groom.customer.common.enums.UserRole
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.UserException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
