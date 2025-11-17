@@ -44,7 +44,9 @@ class RefreshTokenRepositoryTest {
                 passwordHash = "password",
                 role = UserRole.CUSTOMER,
             )
-        return userRepository.save(user)
+        val savedUser = userRepository.save(user)
+        userRepository.flush()
+        return savedUser
     }
 
     @Nested
@@ -65,6 +67,7 @@ class RefreshTokenRepositoryTest {
 
             // when
             val savedToken = refreshTokenRepository.save(refreshToken)
+            refreshTokenRepository.flush()
 
             // then
             assertThat(savedToken.id).isNotNull
@@ -118,9 +121,13 @@ class RefreshTokenRepositoryTest {
                     clientIp = "127.0.0.1",
                 )
             refreshTokenRepository.save(refreshToken)
+            refreshTokenRepository.flush()
 
             // when
-            val foundToken = refreshTokenRepository.findByUserId(user.id)
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findByUserId(user.id)
+                }
 
             // then
             assertThat(foundToken).isPresent
@@ -140,9 +147,13 @@ class RefreshTokenRepositoryTest {
                     clientIp = "127.0.0.1",
                 )
             refreshTokenRepository.save(refreshToken)
+            refreshTokenRepository.flush()
 
             // when
-            val foundToken = refreshTokenRepository.findByToken("unique_token_value")
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findByToken("unique_token_value")
+                }
 
             // then
             assertThat(foundToken).isPresent
@@ -153,7 +164,10 @@ class RefreshTokenRepositoryTest {
         @DisplayName("존재하지 않는 토큰 조회 시 빈 Optional을 반환한다")
         fun `should return empty optional when token not found`() {
             // when
-            val foundToken = refreshTokenRepository.findByToken("nonexistent_token")
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findByToken("nonexistent_token")
+                }
 
             // then
             assertThat(foundToken).isEmpty
@@ -163,7 +177,10 @@ class RefreshTokenRepositoryTest {
         @DisplayName("존재하지 않는 사용자 ID로 조회 시 빈 Optional을 반환한다")
         fun `should return empty optional when user id not found`() {
             // when
-            val foundToken = refreshTokenRepository.findByUserId(UUID.randomUUID())
+            val foundToken =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findByUserId(UUID.randomUUID())
+                }
 
             // then
             assertThat(foundToken).isEmpty
@@ -302,7 +319,10 @@ class RefreshTokenRepositoryTest {
             refreshTokenRepository.flush()
 
             // when - user1의 토큰만 삭제
-            val tokensToDelete = refreshTokenRepository.findByUserId(user1.id)
+            val tokensToDelete =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findByUserId(user1.id)
+                }
             tokensToDelete.ifPresent { refreshTokenRepository.delete(it) }
             refreshTokenRepository.flush() // 즉시 DB에 반영
             entityManager.clear() // 영속성 컨텍스트 초기화
@@ -333,6 +353,7 @@ class RefreshTokenRepositoryTest {
                     clientIp = "127.0.0.1",
                 )
             val savedToken = refreshTokenRepository.save(expiredToken)
+            refreshTokenRepository.flush()
 
             // when
             val now = LocalDateTime.now()
@@ -355,6 +376,7 @@ class RefreshTokenRepositoryTest {
                     clientIp = "127.0.0.1",
                 )
             val savedToken = refreshTokenRepository.save(validToken)
+            refreshTokenRepository.flush()
 
             // when
             val now = LocalDateTime.now()
@@ -379,6 +401,7 @@ class RefreshTokenRepositoryTest {
             val savedToken = refreshTokenRepository.save(tokenToInvalidate)
             savedToken.invalidate()
             refreshTokenRepository.save(savedToken)
+            refreshTokenRepository.flush()
 
             // when
             val now = LocalDateTime.now()
