@@ -85,14 +85,17 @@ class RefreshTokenRepositoryTest {
                     expiresAt = LocalDateTime.now().plusDays(7),
                     clientIp = "127.0.0.1",
                 )
-            val savedToken = refreshTokenRepository.save(oldToken)
+            val savedToken = refreshTokenRepository.saveAndFlush(oldToken)
 
             // when - 같은 엔티티를 업데이트
             savedToken.updateToken("new_token", LocalDateTime.now().plusDays(14))
-            refreshTokenRepository.save(savedToken)
+            refreshTokenRepository.saveAndFlush(savedToken)
 
             // then - user_id는 UNIQUE 제약조건이므로 한 사용자당 하나의 토큰만 존재
-            val tokens = refreshTokenRepository.findAll()
+            val tokens =
+                transactionApplier.applyPrimaryTransaction {
+                    refreshTokenRepository.findAll()
+                }
             assertThat(tokens).hasSize(1)
             assertThat(tokens[0].token).isEqualTo("new_token")
             assertThat(tokens[0].userId).isEqualTo(user.id)
