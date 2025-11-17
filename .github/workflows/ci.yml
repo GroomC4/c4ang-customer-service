@@ -14,11 +14,9 @@ jobs:
   continuous-integration:
     name: Run Tests
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       checks: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -56,7 +54,7 @@ jobs:
           path: '**/build/test-results/test/*.xml'
           reporter: java-junit
 
-  call-ecr-push:
+  call-ecr-push: # 1단계: ECR 푸시 및 태그 추출
     name: Push Docker Image to ECR
     needs: continuous-integration
     if: success() && startsWith(github.ref, 'refs/tags/v')
@@ -64,49 +62,43 @@ jobs:
       id-token: write
       contents: read
     secrets: inherit
-    # 다음 Job이 결과를 받을 수 있도록 ID 설정
-    id: ecr_push_result
-    uses: GroomC4/c4ang-platform-core/.github/workflows/reusable-ecr-push.yml@v1.0.0
+    uses: GroomC4/c4ang-platform-core/.github/workflows/reusable-ecr-push.yml@main
 
-  call-config-update: # CD Trigger Job 시작
-    name: ArgoCD CD Trigger (Update Infra Config)
+  call-config-update: # 2단계: Config 업데이트 (Job 내부에서 직접 실행)
+    name: Trigger CD (Update Config Repo)
     runs-on: ubuntu-latest
-    needs: call-ecr-push
+    needs: call-ecr-push # ECR 푸시가 성공해야 실행
     if: success() && startsWith(github.ref, 'refs/tags/v')
 
     permissions:
+      # c4ang-infra 레포지토리에 커밋하기 위한 권한
       contents: write
 
     steps:
       - name: Set Variables and Get Image Tag
         run: |
-          # 1. 이전 reusable-ecr-push.yml의 Output에서 이미지 태그를 가져와 환경 변수로 설정
-          NEW_TAG=${{ needs.ecr_push_result.outputs.image_tag }}
+          # 1. 이전 ECR Push Job의 Output에서 이미지 태그를 가져와 환경 변수로 설정
+          NEW_TAG=${{ needs.call-ecr-push.outputs.image_tag }}
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           
-          # 2. GitHub 레포지토리 이름에서 서비스 이름 추출 (재사용성 로직)
+          # 2. GitHub 레포지토리 이름에서 서비스 슬러그 추출 (예: c4ang-customer-service -> customer-service)
           SERVICE_SLUG=$(echo ${{ github.repository }} | cut -d'/' -f2 | sed 's/c4ang-//')
-          SERVICE_NAME=$(echo "$SERVICE_SLUG" | sed 's/-service//')
-          
-          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+          echo "SERVICE_SLUG=$SERVICE_SLUG" >> $GITHUB_OUTPUT
 
-      # 1. yq 설치 (YAML 파일 편집 도구)
       - name: Install yq
         uses: mikefarah/yq@v4
 
-      # 2. Config Repo Checkout (c4ang-infra 레포지토리)
       - name: Checkout Config Repository (c4ang-infra)
         uses: actions/checkout@v4
         with:
-          repository: GroomC4/c4ang-infra
+          repository: 'GroomC4/c4ang-infra'
           path: config-repo # 클론되는 로컬 디렉토리 이름
           token: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
 
-      # 3. Helm values.yaml 업데이트
       - name: Update Helm values.yaml
         working-directory: config-repo # 클론된 'config-repo' 디렉토리 내부에서 작업
         run: |
-          SERVICE_SLUG="${{ env.SERVICE_NAME }}-service" 
+          SERVICE_SLUG="${{ steps.service_vars.outputs.service_slug }}" 
           VALUES_FILE="helm/services/$SERVICE_SLUG/values.yaml" 
           
           echo "Updating file: $VALUES_FILE with tag: ${{ env.NEW_TAG }}"
@@ -114,10 +106,9 @@ jobs:
           # yq를 사용하여 'image.tag' 필드 업데이트
           yq e ".image.tag = \"${{ env.NEW_TAG }}\"" -i $VALUES_FILE
 
-      # 4. Commit 및 Push (ArgoCD 트리거)
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           repository: config-repo
-          commit_message: "chore(cd): Update ${{ env.SERVICE_NAME }} image to ${{ env.NEW_TAG }} [skip ci]"
+          commit_message: "chore(cd): Update $SERVICE_SLUG image to ${{ env.NEW_TAG }} [skip ci]"
           branch: main
