@@ -15,7 +15,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       checks: write
     steps:
       - name: Checkout code
