@@ -3,14 +3,12 @@ package com.groom.customer.application.service
 import com.groom.customer.application.dto.LoginCommand
 import com.groom.customer.application.dto.LogoutCommand
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.AuthenticationException
 import com.groom.customer.common.exception.PermissionException
 import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.TokenCredentials
 import com.groom.customer.domain.model.User
-import com.groom.customer.domain.port.LoadUserPort
-import com.groom.customer.domain.port.VerifyPasswordPort
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.service.Authenticator
 import com.groom.customer.domain.service.UserPolicy
 import io.kotest.assertions.throwables.shouldThrow
@@ -22,7 +20,6 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
-import java.util.Optional
 import java.util.UUID
 
 @UnitTest
@@ -32,15 +29,11 @@ class CustomerAuthenticationServiceTest :
         isolationMode = IsolationMode.InstancePerLeaf
 
         Given("유효한 고객 로그인 정보가 주어졌을 때") {
-            val loadUserPort = mockk<LoadUserPort>()
-            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 CustomerAuthenticationService(
-                    loadUserPort = loadUserPort,
-                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -62,8 +55,8 @@ class CustomerAuthenticationServiceTest :
                     clientIp = "127.0.0.1",
                 )
 
-            every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) } returns (user)
-            every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns true
+            every { userPolicy.loadActiveCustomerByEmail(loginCommand.email) } returns user
+            every { userPolicy.validatePassword(user, loginCommand.password, loginCommand.email) } just runs
 
             val tokenCredentials =
                 TokenCredentials(
@@ -81,23 +74,19 @@ class CustomerAuthenticationServiceTest :
                     result.expiresIn shouldBe 300L
                     result.tokenType shouldBe "Bearer"
 
-                    verify(exactly = 1) { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) }
-                    verify(exactly = 1) { verifyPasswordPort.verifyPassword(user, loginCommand.password) }
+                    verify(exactly = 1) { userPolicy.loadActiveCustomerByEmail(loginCommand.email) }
+                    verify(exactly = 1) { userPolicy.validatePassword(user, loginCommand.password, loginCommand.email) }
                     verify(exactly = 1) { authenticator.createAndPersistCredentials(user, loginCommand.clientIp, any()) }
                 }
             }
         }
 
         Given("잘못된 비밀번호로 로그인할 때") {
-            val loadUserPort = mockk<LoadUserPort>()
-            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 CustomerAuthenticationService(
-                    loadUserPort = loadUserPort,
-                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -115,8 +104,9 @@ class CustomerAuthenticationServiceTest :
                     clientIp = "127.0.0.1",
                 )
 
-            every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) } returns (user)
-            every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns false
+            every { userPolicy.loadActiveCustomerByEmail(loginCommand.email) } returns user
+            every { userPolicy.validatePassword(user, loginCommand.password, loginCommand.email) } throws
+                AuthenticationException.InvalidPassword(email = loginCommand.email)
 
             When("로그인을 시도하면") {
                 Then("예외가 발생한다") {
@@ -126,23 +116,19 @@ class CustomerAuthenticationServiceTest :
                         }
                     exception.email shouldBe "customer@example.com"
 
-                    verify(exactly = 1) { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) }
-                    verify(exactly = 1) { verifyPasswordPort.verifyPassword(user, loginCommand.password) }
+                    verify(exactly = 1) { userPolicy.loadActiveCustomerByEmail(loginCommand.email) }
+                    verify(exactly = 1) { userPolicy.validatePassword(user, loginCommand.password, loginCommand.email) }
                     verify(exactly = 0) { authenticator.createAndPersistCredentials(any(), any()) }
                 }
             }
         }
 
         Given("존재하지 않는 이메일로 로그인할 때") {
-            val loadUserPort = mockk<LoadUserPort>()
-            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 CustomerAuthenticationService(
-                    loadUserPort = loadUserPort,
-                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -154,7 +140,8 @@ class CustomerAuthenticationServiceTest :
                     clientIp = "127.0.0.1",
                 )
 
-            every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) } returns null
+            every { userPolicy.loadActiveCustomerByEmail(loginCommand.email) } throws
+                AuthenticationException.UserNotFoundByEmail(email = loginCommand.email)
 
             When("로그인을 시도하면") {
                 Then("예외가 발생한다") {
@@ -164,23 +151,18 @@ class CustomerAuthenticationServiceTest :
                         }
                     exception.email shouldBe "nonexistent@example.com"
 
-                    verify(exactly = 1) { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) }
-                    verify(exactly = 0) { verifyPasswordPort.verifyPassword(any(), any()) }
+                    verify(exactly = 1) { userPolicy.loadActiveCustomerByEmail(loginCommand.email) }
                     verify(exactly = 0) { authenticator.createAndPersistCredentials(any(), any()) }
                 }
             }
         }
 
         Given("로그인한 고객이 로그아웃할 때") {
-            val loadUserPort = mockk<LoadUserPort>()
-            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 CustomerAuthenticationService(
-                    loadUserPort = loadUserPort,
-                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -194,45 +176,34 @@ class CustomerAuthenticationServiceTest :
 
             val logoutCommand = LogoutCommand(userId = userId)
 
-            every { loadUserPort.loadById(userId) } returns (user)
-            every { userPolicy.checkUserHasRole(user, UserRole.CUSTOMER, "CustomerLogout") } just runs
+            every { userPolicy.loadCustomerById(userId) } returns user
             every { authenticator.revokeCredentials(user) } returns Unit
 
             When("로그아웃을 시도하면") {
                 service.logout(logoutCommand)
 
                 Then("로그아웃에 성공한다") {
-                    verify(exactly = 1) { loadUserPort.loadById(userId) }
+                    verify(exactly = 1) { userPolicy.loadCustomerById(userId) }
                     verify(exactly = 1) { authenticator.revokeCredentials(user) }
                 }
             }
         }
 
         Given("OWNER 역할의 사용자가 CUSTOMER 로그아웃을 시도할 때") {
-            val loadUserPort = mockk<LoadUserPort>()
-            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 CustomerAuthenticationService(
-                    loadUserPort = loadUserPort,
-                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
 
             val userId = UUID.randomUUID()
-            val ownerUser =
-                mockk<User>(relaxed = true) {
-                    every { id } returns userId
-                    every { role } returns UserRole.OWNER
-                }
 
             val logoutCommand = LogoutCommand(userId = userId)
 
-            every { loadUserPort.loadById(userId) } returns (ownerUser)
-            every { userPolicy.checkUserHasRole(ownerUser, UserRole.CUSTOMER, "CustomerLogout") } throws
+            every { userPolicy.loadCustomerById(userId) } throws
                 PermissionException.AccessDenied(resource = "CustomerLogout", userId = userId)
 
             When("로그아웃을 시도하면") {
@@ -244,22 +215,18 @@ class CustomerAuthenticationServiceTest :
                     exception.resource shouldBe "CustomerLogout"
                     exception.userId shouldBe userId
 
-                    verify(exactly = 1) { loadUserPort.loadById(userId) }
+                    verify(exactly = 1) { userPolicy.loadCustomerById(userId) }
                     verify(exactly = 0) { authenticator.revokeCredentials(any()) }
                 }
             }
         }
 
         Given("존재하지 않는 사용자가 로그아웃을 시도할 때") {
-            val loadUserPort = mockk<LoadUserPort>()
-            val verifyPasswordPort = mockk<VerifyPasswordPort>()
             val authenticator = mockk<Authenticator>()
             val userPolicy = mockk<UserPolicy>()
 
             val service =
                 CustomerAuthenticationService(
-                    loadUserPort = loadUserPort,
-                    verifyPasswordPort = verifyPasswordPort,
                     authenticator = authenticator,
                     userPolicy = userPolicy,
                 )
@@ -267,7 +234,8 @@ class CustomerAuthenticationServiceTest :
             val userId = UUID.randomUUID()
             val logoutCommand = LogoutCommand(userId = userId)
 
-            every { loadUserPort.loadById(userId) } returns null
+            every { userPolicy.loadCustomerById(userId) } throws
+                UserException.UserNotFound(userId = userId)
 
             When("로그아웃을 시도하면") {
                 Then("예외가 발생한다") {
@@ -277,7 +245,7 @@ class CustomerAuthenticationServiceTest :
                         }
                     exception.userId shouldBe userId
 
-                    verify(exactly = 1) { loadUserPort.loadById(userId) }
+                    verify(exactly = 1) { userPolicy.loadCustomerById(userId) }
                 }
             }
         }

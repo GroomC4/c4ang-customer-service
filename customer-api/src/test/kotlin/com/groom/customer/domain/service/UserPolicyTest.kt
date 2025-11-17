@@ -1,10 +1,11 @@
 package com.groom.customer.domain.service
 
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.User
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.port.LoadUserPort
+import com.groom.customer.domain.port.VerifyPasswordPort
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
@@ -18,7 +19,8 @@ class UserPolicyTest :
     ShouldSpec({
 
         val loadUserPort = mockk<LoadUserPort>()
-        val userPolicy = UserPolicy(loadUserPort)
+        val verifyPasswordPort = mockk<VerifyPasswordPort>()
+        val userPolicy = UserPolicy(loadUserPort, verifyPasswordPort)
 
         context("checkAlreadyRegister") {
             should("동일한 이메일과 역할로 등록된 사용자가 없으면 예외가 발생하지 않는다") {
