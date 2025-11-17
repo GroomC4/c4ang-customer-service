@@ -10,10 +10,10 @@ VALUES
      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- UserProfile 생성
-INSERT INTO p_user_profile (id, user_id, full_name, phone_number, default_address, created_at, updated_at)
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, contact_email, default_address, created_at, updated_at)
 VALUES
     ('850e8400-e29b-41d4-a716-446655440001', '750e8400-e29b-41d4-a716-446655440001',
-     '고객테스트', '010-1111-2222', '서울시 강남구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+     '고객테스트', '010-1111-2222', 'customer@example.com', '서울시 강남구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Customer 사용자 생성 (잘못된 비밀번호 테스트용)
 -- 비밀번호: correctPassword123!
@@ -24,10 +24,10 @@ VALUES
      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- UserProfile 생성
-INSERT INTO p_user_profile (id, user_id, full_name, phone_number, default_address, created_at, updated_at)
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, contact_email, default_address, created_at, updated_at)
 VALUES
     ('850e8400-e29b-41d4-a716-446655440002', '750e8400-e29b-41d4-a716-446655440002',
-     '비밀번호오류', '010-3333-4444', '서울시 서초구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+     '비밀번호오류', '010-3333-4444', 'wrongpwd@example.com', '서울시 서초구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Customer 사용자 생성 (로그아웃 테스트용)
 INSERT INTO p_user (id, email, username, password_hash, role, is_active, created_at, updated_at)
@@ -37,7 +37,33 @@ VALUES
      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- UserProfile 생성
-INSERT INTO p_user_profile (id, user_id, full_name, phone_number, default_address, created_at, updated_at)
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, contact_email, default_address, created_at, updated_at)
 VALUES
     ('850e8400-e29b-41d4-a716-446655440003', '750e8400-e29b-41d4-a716-446655440003',
-     '로그아웃테스트', '010-9999-0000', '서울시 강남구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+     '로그아웃테스트', '010-9999-0000', 'logoutcustomer@example.com', '서울시 강남구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- 비활성화된 Customer 사용자 (비활성화 계정 테스트용)
+INSERT INTO p_user (id, email, username, password_hash, role, is_active, created_at, updated_at)
+VALUES
+    ('750e8400-e29b-41d4-a716-446655440004', 'inactive_customer@example.com', '비활성고객',
+     '$2y$10$GPA5baVHQy6hHc6LO1EHsOg3RYv4CvuKpvgU0/2trEmbl8X6CDgLq', 'CUSTOMER', false,
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- UserProfile 생성
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, contact_email, default_address, created_at, updated_at)
+VALUES
+    ('850e8400-e29b-41d4-a716-446655440004', '750e8400-e29b-41d4-a716-446655440004',
+     '비활성고객', '010-5555-6666', 'inactive_customer@example.com', '서울시 마포구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Owner 사용자 (역할 검증 테스트용)
+INSERT INTO p_user (id, email, username, password_hash, role, is_active, created_at, updated_at)
+VALUES
+    ('750e8400-e29b-41d4-a716-446655440005', 'owner@example.com', '사장님',
+     '$2y$10$GPA5baVHQy6hHc6LO1EHsOg3RYv4CvuKpvgU0/2trEmbl8X6CDgLq', 'OWNER', true,
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- UserProfile 생성
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, contact_email, default_address, created_at, updated_at)
+VALUES
+    ('850e8400-e29b-41d4-a716-446655440005', '750e8400-e29b-41d4-a716-446655440005',
+     '사장님', '010-7777-8888', 'owner@example.com', '서울시 종로구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
