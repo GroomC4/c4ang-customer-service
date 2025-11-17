@@ -51,7 +51,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Test Results
-          path: '**/build-results/test/*.xml'
+          path: '**/build/test-results/test/*.xml'
           reporter: java-junit
 
   tracking-cd-workflow: # Job (ECR 푸시 + Config 업데이트 모두 수행)
