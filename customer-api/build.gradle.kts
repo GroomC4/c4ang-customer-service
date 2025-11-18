@@ -7,7 +7,7 @@ plugins {
 }
 
 // Platform Core 버전 관리
-val platformCoreVersion = "1.2.2-RC9"
+val platformCoreVersion = "1.2.2-RC10"
 // Contract Hub 버전 관리
 val contractHubVersion = "v1.0.0"
 
