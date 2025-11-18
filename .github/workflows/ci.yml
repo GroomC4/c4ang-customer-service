@@ -53,7 +53,7 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: Test Results
+          name: Test Results/
           path: '**/build/test-results/test/*.xml'
           reporter: java-junit
 

@@ -12,6 +12,9 @@ import org.springframework.test.context.ActiveProfiles
  *
  * 모든 통합 테스트는 이 클래스를 상속받아 사용
  *
+ * ⚠️ application-test.yml에서 Redisson 자동 구성을 제외하여
+ *    testcontainers-starter가 제공하는 RedisConnectionFactory만 사용합니다.
+ *
  * @see <a href="https://github.com/GroomC4/c4ang-platform-core">platform-core testcontainers-starter</a>
  */
 @SpringBootTest(
