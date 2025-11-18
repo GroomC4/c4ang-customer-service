@@ -143,8 +143,8 @@ class InternalUserControllerIntegrationTest : IntegrationTestBase() {
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.createdAt").isNumber)
                 .andExpect(jsonPath("$.updatedAt").isNumber)
-                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.greaterThan(0)))
-                .andExpect(jsonPath("$.updatedAt").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.greaterThan(0L)))
+                .andExpect(jsonPath("$.updatedAt").value(org.hamcrest.Matchers.greaterThan(0L)))
         }
     }
 }

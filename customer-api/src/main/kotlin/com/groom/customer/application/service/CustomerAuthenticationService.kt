@@ -35,12 +35,15 @@ class CustomerAuthenticationService(
             loadUserPort.loadByEmailAndRole(command.email, UserRole.CUSTOMER)
                 ?: throw AuthenticationException.UserNotFoundByEmail(email = command.email)
 
-        // 2. 비밀번호 검증
+        // 2. 사용자 활성 상태 확인
+        userPolicy.checkUserIsActive(user)
+
+        // 3. 비밀번호 검증
         if (!verifyPasswordPort.verifyPassword(user, command.password)) {
             throw AuthenticationException.InvalidPassword(email = command.email)
         }
 
-        // 3. 인증 정보 생성 및 저장 후 DTO로 변환
+        // 4. 인증 정보 생성 및 저장 후 DTO로 변환
         return authenticator
             .createAndPersistCredentials(user, command.clientIp)
             .toLoginResult()

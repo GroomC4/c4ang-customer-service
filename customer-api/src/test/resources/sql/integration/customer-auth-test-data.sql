@@ -41,3 +41,29 @@ INSERT INTO p_user_profile (id, user_id, full_name, phone_number, default_addres
 VALUES
     ('850e8400-e29b-41d4-a716-446655440003', '750e8400-e29b-41d4-a716-446655440003',
      '로그아웃테스트', '010-9999-0000', '서울시 강남구', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- 비활성화된 Customer 사용자 생성 (Internal API 테스트용)
+INSERT INTO p_user (id, email, username, password_hash, role, is_active, created_at, updated_at)
+VALUES
+    ('750e8400-e29b-41d4-a716-446655440004', 'inactive_customer@example.com', '비활성고객',
+     '$2y$10$GPA5baVHQy6hHc6LO1EHsOg3RYv4CvuKpvgU0/2trEmbl8X6CDgLq', 'CUSTOMER', false,
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- UserProfile 생성
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, default_address, created_at, updated_at)
+VALUES
+    ('850e8400-e29b-41d4-a716-446655440004', '750e8400-e29b-41d4-a716-446655440004',
+     '비활성고객', '010-5555-6666', null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- OWNER 사용자 생성 (Internal API 테스트용)
+INSERT INTO p_user (id, email, username, password_hash, role, is_active, created_at, updated_at)
+VALUES
+    ('750e8400-e29b-41d4-a716-446655440005', 'owner@example.com', '사장님',
+     '$2y$10$GPA5baVHQy6hHc6LO1EHsOg3RYv4CvuKpvgU0/2trEmbl8X6CDgLq', 'OWNER', true,
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- UserProfile 생성
+INSERT INTO p_user_profile (id, user_id, full_name, phone_number, default_address, created_at, updated_at)
+VALUES
+    ('850e8400-e29b-41d4-a716-446655440005', '750e8400-e29b-41d4-a716-446655440005',
+     '사장님', '010-7777-8888', null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

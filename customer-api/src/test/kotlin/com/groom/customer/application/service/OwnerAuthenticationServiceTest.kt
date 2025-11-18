@@ -70,6 +70,7 @@ class OwnerAuthenticationServiceTest :
                 )
 
             every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.OWNER) } returns (user)
+            every { userPolicy.checkUserIsActive(user) } just runs
             every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns true
             every { authenticator.createAndPersistCredentials(user, loginCommand.clientIp, any()) } returns tokenCredentials
 
@@ -117,6 +118,7 @@ class OwnerAuthenticationServiceTest :
                 )
 
             every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.OWNER) } returns (user)
+            every { userPolicy.checkUserIsActive(user) } just runs
             every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns false
 
             When("로그인을 시도하면") {

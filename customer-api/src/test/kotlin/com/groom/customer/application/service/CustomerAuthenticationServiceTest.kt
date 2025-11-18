@@ -63,6 +63,7 @@ class CustomerAuthenticationServiceTest :
                 )
 
             every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) } returns (user)
+            every { userPolicy.checkUserIsActive(user) } just runs
             every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns true
 
             val tokenCredentials =
@@ -116,6 +117,7 @@ class CustomerAuthenticationServiceTest :
                 )
 
             every { loadUserPort.loadByEmailAndRole(loginCommand.email, UserRole.CUSTOMER) } returns (user)
+            every { userPolicy.checkUserIsActive(user) } just runs
             every { verifyPasswordPort.verifyPassword(user, loginCommand.password) } returns false
 
             When("로그인을 시도하면") {

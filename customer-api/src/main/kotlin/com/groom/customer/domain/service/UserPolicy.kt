@@ -64,4 +64,17 @@ class UserPolicy(
             )
         }
     }
+
+    /**
+     * 사용자가 활성 상태인지 확인한다.
+     * 비활성화된 사용자는 로그인할 수 없다.
+     *
+     * @param user 검증할 사용자
+     * @throws com.groom.customer.common.exception.AuthenticationException.UserNotFoundByEmail 사용자가 비활성화된 경우
+     */
+    fun checkUserIsActive(user: User) {
+        if (!user.isActive) {
+            throw com.groom.customer.common.exception.AuthenticationException.UserNotFoundByEmail(user.email)
+        }
+    }
 }
