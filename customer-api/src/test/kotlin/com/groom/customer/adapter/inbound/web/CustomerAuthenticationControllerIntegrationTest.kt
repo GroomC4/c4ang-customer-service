@@ -6,14 +6,13 @@ import com.groom.customer.adapter.inbound.web.dto.LoginRequest
 import com.groom.customer.adapter.inbound.web.dto.SignupCustomerRequest
 import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.application.service.CustomerAuthenticationService
-import com.groom.customer.common.annotation.IntegrationTest
+import org.springframework.boot.test.context.SpringBootTest
 import com.groom.customer.configuration.jwt.JwtProperties
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlGroup
@@ -23,8 +22,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @DisplayName("일반 고객 인증 컨트롤러 통합 테스트")
-@IntegrationTest
-@SpringBootTest
+@SpringBootTest(properties = ["spring.profiles.active=test"])
 @AutoConfigureMockMvc
 @SqlGroup(
     Sql(scripts = ["/sql/integration/customer-auth-test-data.sql"], executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),

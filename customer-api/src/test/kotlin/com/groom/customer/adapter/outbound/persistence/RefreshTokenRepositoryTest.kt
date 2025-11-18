@@ -1,7 +1,7 @@
 package com.groom.customer.adapter.outbound.persistence
 
 import com.groom.customer.common.TransactionApplier
-import com.groom.customer.common.annotation.IntegrationTest
+import org.springframework.boot.test.context.SpringBootTest
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.model.UserRole
@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 import java.util.UUID
 
-@IntegrationTest
+@SpringBootTest(properties = ["spring.profiles.active=test"])
 @DisplayName("RefreshTokenRepository CRUD 테스트")
 class RefreshTokenRepositoryTest {
     @Autowired

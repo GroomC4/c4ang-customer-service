@@ -3,7 +3,6 @@ package com.groom.customer.domain.service
 import com.groom.customer.adapter.outbound.persistence.UserProfileRepository
 import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.common.TransactionApplier
-import com.groom.customer.common.annotation.IntegrationTest
 import com.groom.customer.domain.model.Address
 import com.groom.customer.domain.model.Email
 import com.groom.customer.domain.model.PhoneNumber
@@ -17,8 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
-@IntegrationTest
-@SpringBootTest
+@SpringBootTest(properties = ["spring.profiles.active=test"])
 class UserFactoryIntegrationTest {
     @Autowired
     private lateinit var userFactory: UserFactory

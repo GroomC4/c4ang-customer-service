@@ -2,7 +2,7 @@ package com.groom.customer.application.service
 
 import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.application.dto.RegisterCustomerCommand
-import com.groom.customer.common.annotation.IntegrationTest
+import org.springframework.boot.test.context.SpringBootTest
 import com.groom.customer.common.exception.UserException
 import com.groom.customer.domain.model.UserRole
 import org.assertj.core.api.Assertions.assertThat
@@ -11,10 +11,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 
-@IntegrationTest
-@SpringBootTest
+@SpringBootTest(properties = ["spring.profiles.active=test"])
 class RegisterCustomerServiceIntegrationTest {
     @Autowired
     private lateinit var registerCustomerService: RegisterCustomerService

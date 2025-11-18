@@ -2,10 +2,12 @@ package com.groom.customer.adapter.inbound.web
 
 import com.groom.customer.application.service.InternalUserService
 import com.groom.ecommerce.customer.api.avro.UserInternalResponse
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -29,11 +31,9 @@ class InternalUserController(
      * @param userId 사용자 UUID
      * @return 사용자 정보 (UserInternalResponse)
      */
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{userId}")
     fun getUserById(
         @PathVariable userId: String,
-    ): ResponseEntity<UserInternalResponse> {
-        val userResponse = internalUserService.getUserById(UUID.fromString(userId))
-        return ResponseEntity.ok(userResponse)
-    }
+    ): UserInternalResponse = internalUserService.getUserById(UUID.fromString(userId))
 }

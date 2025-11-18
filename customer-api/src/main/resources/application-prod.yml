@@ -1,17 +1,21 @@
 spring:
   datasource:
     master:
-      url: jdbc:postgresql://localhost:15432/groom
+      url: jdbc:postgresql://c4-app-db.cfkm648uqlug.ap-northeast-2.rds.amazonaws.com:5432/customer_db
       username: application
       password: application
       driver-class-name: org.postgresql.Driver
     replica:
-      url: jdbc:postgresql://localhost:15433/groom
+      url: jdbc:postgresql://c4-app-db.cfkm648uqlug.ap-northeast-2.rds.amazonaws.com:5432/customer_db
       username: application
       password: application
       driver-class-name: org.postgresql.Driver
       hikari:
         maximum-pool-size: 5
+# Platform Core DataSource 라우팅 설정
+platform:
+  datasource:
+    replica-enabled: true
   jpa:
     hibernate:
       ddl-auto: none

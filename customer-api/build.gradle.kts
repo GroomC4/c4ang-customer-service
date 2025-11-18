@@ -7,7 +7,7 @@ plugins {
 }
 
 // Platform Core 버전 관리
-val platformCoreVersion = "1.2.2-RC6"
+val platformCoreVersion = "1.2.2-RC9"
 // Contract Hub 버전 관리
 val contractHubVersion = "v1.0.0"
 
@@ -17,6 +17,9 @@ dependencies {
 
     // Apache Avro (contract-hub가 사용하는 Avro 클래스용)
     implementation("org.apache.avro:avro:1.11.3")
+
+    // Jackson Avro (Avro 객체를 JSON으로 직렬화)
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-avro:2.17.0")
 
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")

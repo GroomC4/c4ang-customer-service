@@ -7,13 +7,17 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.retry.annotation.EnableRetry
 import org.springframework.scheduling.annotation.EnableAsync
 
-@SpringBootApplication
+@SpringBootApplication(
+    exclude = [
+        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration::class,
+    ]
+)
 @ConfigurationPropertiesScan
 @EnableAsync
 @EnableRetry
 @EnableFeignClients
-class CustomerServiceApiApplication
+class CustomerApiApplication
 
 fun main(args: Array<String>) {
-    runApplication<CustomerServiceApiApplication>(*args)
+    runApplication<CustomerApiApplication>(*args)
 }
