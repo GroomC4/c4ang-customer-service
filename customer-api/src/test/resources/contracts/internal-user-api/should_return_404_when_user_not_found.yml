@@ -1,0 +1,20 @@
+description: Internal User API - 존재하지 않는 사용자 ID로 조회 시 404 반환
+name: should_return_404_when_user_not_found
+request:
+  method: GET
+  url: /internal/v1/users/00000000-0000-0000-0000-000000000000
+  headers:
+    Content-Type: application/json
+response:
+  status: 404
+  headers:
+    Content-Type: application/json
+  body:
+    code: "USER_NOT_FOUND"
+    message: "User not found"
+  matchers:
+    body:
+      - path: $.code
+        type: by_equality
+      - path: $.message
+        type: by_type

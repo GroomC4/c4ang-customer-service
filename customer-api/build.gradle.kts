@@ -8,6 +8,8 @@ plugins {
 
 // Platform Core 버전 관리
 val platformCoreVersion = "1.2.2-RC11"
+// Spring Cloud Contract 버전
+val springCloudContractVersion = "4.1.4"
 
 dependencies {
 
@@ -45,6 +47,9 @@ dependencies {
 
     // Platform Core - Testcontainers (테스트 전용)
     testImplementation("com.groom.platform:testcontainers-starter:$platformCoreVersion")
+
+    // Spring Cloud Contract (Provider-side testing)
+    testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:$springCloudContractVersion")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")

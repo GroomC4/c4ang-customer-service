@@ -1,0 +1,33 @@
+description: Internal User API - 유효한 사용자 ID로 조회
+name: should_return_user_when_id_exists
+request:
+  method: GET
+  url: /internal/v1/users/750e8400-e29b-41d4-a716-446655440001
+  headers:
+    Content-Type: application/json
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body:
+    userId: "750e8400-e29b-41d4-a716-446655440001"
+    username: "고객테스트"
+    email: "customer@example.com"
+    role: "CUSTOMER"
+    isActive: true
+    profile:
+      fullName: "고객테스트"
+      phoneNumber: "010-1111-2222"
+      address: null
+    createdAt: 1699999999999
+    updatedAt: 1699999999999
+    lastLoginAt: null
+  matchers:
+    body:
+      - path: $.userId
+        type: by_regex
+        value: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+      - path: $.createdAt
+        type: by_type
+      - path: $.updatedAt
+        type: by_type
