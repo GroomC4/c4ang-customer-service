@@ -5,10 +5,11 @@ plugins {
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
     id("org.springframework.cloud.contract") version "4.1.4"
+    `maven-publish`
 }
 
 // Platform Core 버전 관리
-val platformCoreVersion = "1.2.2-RC13"
+val platformCoreVersion = "1.2.2-RC14"
 // Spring Cloud Contract 버전
 val springCloudContractVersion = "4.1.4"
 
@@ -144,7 +145,32 @@ tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 
 // Spring Cloud Contract 설정
 contracts {
-    testMode.set(org.springframework.cloud.contract.verifier.config.TestMode.EXPLICIT)
+    testMode.set(org.springframework.cloud.contract.verifier.config.TestMode.MOCKMVC)
     baseClassForTests.set("com.groom.customer.common.ContractTestBase")
     contractsDslDir.set(file("src/test/resources/contracts"))
+}
+
+// Contract Stub 발행 설정 (Consumer가 사용할 수 있도록 GitHub Packages에 발행)
+publishing {
+    publications {
+        create<MavenPublication>("stubs") {
+            groupId = "com.groom"
+            artifactId = "customer-service-contract-stubs"
+            version = project.version.toString()
+
+            // Contract Stub JAR을 발행
+            artifact(tasks.named("verifierStubsJar"))
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/GroomC4/c4ang-customer-service")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") as String?
+                password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") as String?
+            }
+        }
+    }
 }
