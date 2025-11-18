@@ -32,12 +32,8 @@ class InternalUserControllerIntegrationTest : IntegrationTestBase() {
     @Nested
     @DisplayName("GET /internal/v1/users/{userId} - ID로 사용자 조회")
     inner class GetUserByIdTest {
-        // TODO: Avro SpecificRecord의 JSON 직렬화 문제 해결 필요
-        // - 현재 HttpMessageNotWritableException 발생
-        // - Jackson Avro 모듈 설정 또는 DTO 변환 필요
-        @Disabled("Avro JSON 직렬화 이슈")
         @Test
-        @DisplayName("유효한 사용자 ID로 조회 시 200 OK와 Avro 스키마 응답을 반환한다")
+        @DisplayName("유효한 사용자 ID로 조회 시 200 OK와 사용자 정보를 반환한다")
         fun `should return 200 and user data when user id exists`() {
             // given
             val userId = "750e8400-e29b-41d4-a716-446655440001" // customer@example.com
@@ -61,8 +57,6 @@ class InternalUserControllerIntegrationTest : IntegrationTestBase() {
                 .andExpect(jsonPath("$.updatedAt").isNumber)
         }
 
-        // TODO: Avro SpecificRecord의 JSON 직렬화 문제 해결 필요
-        @Disabled("Avro JSON 직렬화 이슈")
         @Test
         @DisplayName("비활성화된 사용자도 조회할 수 있다")
         fun `should return inactive user when user id exists`() {
@@ -84,8 +78,6 @@ class InternalUserControllerIntegrationTest : IntegrationTestBase() {
                 .andExpect(jsonPath("$.profile.phoneNumber").value("010-5555-6666"))
         }
 
-        // TODO: Avro SpecificRecord의 JSON 직렬화 문제 해결 필요
-        @Disabled("Avro JSON 직렬화 이슈")
         @Test
         @DisplayName("OWNER 역할 사용자도 조회할 수 있다")
         fun `should return owner user when user id exists`() {
@@ -137,8 +129,6 @@ class InternalUserControllerIntegrationTest : IntegrationTestBase() {
                 ).andExpect(status().isBadRequest)
         }
 
-        // TODO: Avro SpecificRecord의 JSON 직렬화 문제 해결 필요
-        @Disabled("Avro JSON 직렬화 이슈")
         @Test
         @DisplayName("타임스탬프 필드가 epoch milliseconds로 반환된다")
         fun `should return timestamp fields as epoch milliseconds`() {

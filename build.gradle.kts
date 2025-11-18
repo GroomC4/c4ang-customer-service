@@ -26,12 +26,6 @@ allprojects {
                 password = System.getenv("GITHUB_TOKEN")
             }
         }
-
-        // JitPack for contract-hub
-        maven { url = uri("https://jitpack.io") }
-
-        // Confluent for Kafka Avro Serializer
-        maven { url = uri("https://packages.confluent.io/maven/") }
     }
 
     extensions.findByType<KotlinJvmProjectExtension>()?.apply {
