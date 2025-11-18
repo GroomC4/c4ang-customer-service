@@ -16,6 +16,22 @@ allprojects {
 
     repositories {
         mavenCentral()
+
+        // GitHub Packages for platform-core
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/GroomC4/c4ang-platform-core")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+
+        // JitPack for contract-hub
+        maven { url = uri("https://jitpack.io") }
+
+        // Confluent for Kafka Avro Serializer
+        maven { url = uri("https://packages.confluent.io/maven/") }
     }
 
     extensions.findByType<KotlinJvmProjectExtension>()?.apply {

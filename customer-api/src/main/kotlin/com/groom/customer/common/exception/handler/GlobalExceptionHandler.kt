@@ -121,6 +121,10 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleUserException(e: UserException): ResponseEntity<ErrorResponse> {
         val (errorCode, httpStatus) =
             when (e) {
+                is UserException.NotFound -> {
+                    logger.warn(e) { "User not found: ${e.message}" }
+                    ErrorCode.USER_NOT_FOUND to HttpStatus.NOT_FOUND
+                }
                 is UserException.DuplicateEmail -> {
                     logger.warn(e) { "Duplicate email: ${e.email}" }
                     ErrorCode.DUPLICATE_EMAIL to HttpStatus.CONFLICT

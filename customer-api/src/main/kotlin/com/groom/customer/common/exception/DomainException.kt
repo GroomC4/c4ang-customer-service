@@ -142,6 +142,14 @@ sealed class UserException(
     cause: Throwable? = null,
 ) : DomainException(message, cause) {
     /**
+     * 사용자를 찾을 수 없는 경우
+     * @param message 에러 메시지
+     */
+    data class NotFound(
+        override val message: String,
+    ) : UserException(message)
+
+    /**
      * 이메일이 중복된 경우
      * @param email 중복된 이메일
      */

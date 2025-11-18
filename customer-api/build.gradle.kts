@@ -9,9 +9,15 @@ plugins {
 // Platform Core 버전 관리
 val platformCoreVersion = "1.2.2-RC6"
 // Contract Hub 버전 관리
-val contractHubVersion = "1.0.0-SNAPSHOT"
+val contractHubVersion = "v1.0.0"
 
 dependencies {
+    // Contract Hub: API 스키마
+    implementation("com.github.GroomC4:c4ang-contract-hub:$contractHubVersion")
+
+    // Apache Avro (contract-hub가 사용하는 Avro 클래스용)
+    implementation("org.apache.avro:avro:1.11.3")
+
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
