@@ -1,5 +1,6 @@
 package com.groom.customer.common
 
+import com.groom.platform.testcontainers.annotation.IntegrationTest
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
@@ -12,11 +13,13 @@ import org.springframework.test.context.ActiveProfiles
  *
  * 모든 통합 테스트는 이 클래스를 상속받아 사용
  *
+ * ⚠️ @IntegrationTest: Kafka/Schema Registry 동적 포트 자동 주입 (필수!)
  * ⚠️ application-test.yml에서 Redisson 자동 구성을 제외하여
  *    testcontainers-starter가 제공하는 RedisConnectionFactory만 사용합니다.
  *
  * @see <a href="https://github.com/GroomC4/c4ang-platform-core">platform-core testcontainers-starter</a>
  */
+@IntegrationTest
 @SpringBootTest(
     properties = [
         // PostgreSQL
