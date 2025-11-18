@@ -1,73 +1,53 @@
 package com.groom.customer.application.service
 
-import com.groom.customer.adapter.outbound.persistence.UserRepository
 import com.groom.customer.common.exception.UserException
+import com.groom.customer.domain.port.LoadUserPort
+import com.groom.customer.domain.service.UserInternalMapper
 import com.groom.ecommerce.customer.api.avro.UserInternalResponse
-import com.groom.ecommerce.customer.api.avro.UserProfileInternal
-import com.groom.ecommerce.customer.api.avro.UserRole
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Internal User Service
+ * Internal User Application Service
  *
- * K8s 내부 마이크로서비스 간 통신을 위한 사용자 조회 서비스
- * - contract-hub의 Avro 스키마 기반 응답
+ * K8s 내부 마이크로서비스 간 통신을 위한 사용자 조회 애플리케이션 서비스
+ *
+ * 책임:
+ * - Use Case 조율 (사용자 조회 → Avro 응답 변환)
+ * - Port를 통한 User 조회 (Infrastructure 계층에 의존하지 않음)
+ * - Domain Service를 통한 변환 로직 위임
  * - Read-only 트랜잭션으로 Replica DB 자동 라우팅
+ *
+ * 헥사고날 아키텍처:
+ * - Inbound Port: InternalUserController가 이 서비스를 호출
+ * - Outbound Port: LoadUserPort를 통해 User 조회
+ * - Domain Service: UserInternalMapper를 통해 도메인 모델 변환
  */
 @Service
 @Transactional(readOnly = true)
 class InternalUserService(
-    private val userRepository: UserRepository,
+    private val loadUserPort: LoadUserPort,
+    private val userInternalMapper: UserInternalMapper,
 ) {
     /**
-     * 사용자 ID로 사용자 정보 조회
+     * 사용자 ID로 사용자 정보 조회 (Use Case)
+     *
+     * 흐름:
+     * 1. Port를 통해 User 도메인 모델 조회
+     * 2. Domain Service를 통해 Avro 스키마로 변환
      *
      * @param userId 사용자 UUID
-     * @return UserInternalResponse (Avro 스키마)
-     * @throws UserException.NotFound 사용자를 찾을 수 없는 경우
+     * @return UserInternalResponse (contract-hub Avro 스키마)
+     * @throws UserException.UserNotFound 사용자를 찾을 수 없는 경우
      */
     fun getUserById(userId: UUID): UserInternalResponse {
+        // 1. Port를 통해 User 도메인 모델 조회
         val user =
-            userRepository.findById(userId).orElseThrow {
-                UserException.UserNotFound(userId)
-            }
+            loadUserPort.loadById(userId)
+                ?: throw UserException.UserNotFound(userId)
 
-        // UserProfile 정보 변환
-        val profileInternal =
-            UserProfileInternal.newBuilder()
-                .setFullName(user.profile?.fullName ?: "")
-                .setPhoneNumber(user.profile?.phoneNumber ?: "")
-                .setAddress(null) // address는 User 엔티티에 없으므로 null
-                .build()
-
-        // UserRole enum 변환 (contract-hub는 CUSTOMER, OWNER, ADMIN만 지원)
-        val userRole =
-            when (user.role) {
-                com.groom.customer.domain.model.UserRole.CUSTOMER -> UserRole.CUSTOMER
-                com.groom.customer.domain.model.UserRole.OWNER -> UserRole.OWNER
-                com.groom.customer.domain.model.UserRole.MANAGER -> UserRole.ADMIN // MANAGER는 ADMIN으로 매핑
-                com.groom.customer.domain.model.UserRole.MASTER -> UserRole.ADMIN // MASTER는 ADMIN으로 매핑
-            }
-
-        // LocalDateTime을 epoch millis로 변환
-        val createdAtMillis = user.createdAt?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli() ?: 0L
-        val updatedAtMillis = user.updatedAt?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli() ?: 0L
-        val lastLoginAtMillis =
-            user.lastLoginAt?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
-
-        // UserInternalResponse 생성
-        return UserInternalResponse.newBuilder()
-            .setUserId(user.id.toString())
-            .setUsername(user.username)
-            .setEmail(user.email)
-            .setRole(userRole)
-            .setIsActive(user.isActive)
-            .setProfile(profileInternal)
-            .setCreatedAt(createdAtMillis)
-            .setUpdatedAt(updatedAtMillis)
-            .setLastLoginAt(lastLoginAtMillis)
-            .build()
+        // 2. Domain Service를 통해 Avro 스키마로 변환
+        return userInternalMapper.toUserInternalResponse(user)
     }
 }
