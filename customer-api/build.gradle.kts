@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
+    id("org.springframework.cloud.contract") version "4.1.4"
 }
 
 // Platform Core 버전 관리
@@ -50,6 +51,8 @@ dependencies {
 
     // Spring Cloud Contract (Provider-side testing)
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:$springCloudContractVersion")
+    testImplementation("io.rest-assured:rest-assured:5.3.2")
+    testImplementation("io.rest-assured:spring-mock-mvc:5.3.2")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -137,4 +140,11 @@ val dockerComposeDown by tasks.registering(Exec::class) {
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     dependsOn(dockerComposeUp)
     finalizedBy(dockerComposeDown)
+}
+
+// Spring Cloud Contract 설정
+contracts {
+    testMode.set(org.springframework.cloud.contract.verifier.config.TestMode.EXPLICIT)
+    baseClassForTests.set("com.groom.customer.common.ContractTestBase")
+    contractsDslDir.set(file("src/test/resources/contracts"))
 }

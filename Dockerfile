@@ -1,6 +1,14 @@
 # Build stage
 FROM gradle:8.5-jdk21 AS build
 
+# GitHub Packages 인증을 위한 ARG
+ARG GITHUB_ACTOR
+ARG GITHUB_TOKEN
+
+# 환경 변수로 설정 (Gradle이 사용)
+ENV GITHUB_ACTOR=${GITHUB_ACTOR}
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
+
 WORKDIR /app
 
 # Copy gradle configuration files
