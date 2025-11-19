@@ -1,5 +1,6 @@
 package com.groom.customer.configuration.jpa
 
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateProperties
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties
@@ -27,7 +28,7 @@ class JpaConfig {
     @Primary
     @Bean("entityManagerFactory")
     fun entityManager(
-        dataSource: DataSource,
+        @Qualifier("dataSource") dataSource: DataSource,
         jpaProperties: JpaProperties,
         hibernateProperties: HibernateProperties,
     ): LocalContainerEntityManagerFactoryBean =
