@@ -1,7 +1,6 @@
 package com.groom.customer.adapter.outbound.persistence
 
 import com.groom.customer.common.TransactionApplier
-import org.springframework.boot.test.context.SpringBootTest
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.model.UserRole
 import org.assertj.core.api.Assertions.assertThat
@@ -10,6 +9,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
 
 @SpringBootTest(properties = ["spring.profiles.active=test"])

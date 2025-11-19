@@ -38,7 +38,11 @@ class UserInternalMapper {
 
         val createdAtMillis = user.createdAt?.let { toEpochMillis(it) } ?: 0L
         val updatedAtMillis = user.updatedAt?.let { toEpochMillis(it) } ?: 0L
-        val lastLoginAtMillis = user.lastLoginAt?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+        val lastLoginAtMillis =
+            user.lastLoginAt
+                ?.atZone(ZoneId.systemDefault())
+                ?.toInstant()
+                ?.toEpochMilli()
 
         return UserInternalDto(
             userId = user.id.toString(),

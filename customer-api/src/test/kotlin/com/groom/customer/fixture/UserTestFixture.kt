@@ -1,8 +1,8 @@
 package com.groom.customer.fixture
 
-import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.model.User
 import com.groom.customer.domain.model.UserProfile
+import com.groom.customer.domain.model.UserRole
 import java.time.LocalDateTime
 import java.util.UUID
 

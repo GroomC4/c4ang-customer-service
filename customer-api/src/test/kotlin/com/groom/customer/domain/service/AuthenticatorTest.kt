@@ -1,10 +1,10 @@
 package com.groom.customer.domain.service
 
 import com.groom.customer.common.annotation.UnitTest
-import com.groom.customer.domain.model.UserRole
 import com.groom.customer.common.exception.RefreshTokenException
 import com.groom.customer.domain.model.RefreshToken
 import com.groom.customer.domain.model.User
+import com.groom.customer.domain.model.UserRole
 import com.groom.customer.domain.port.GenerateTokenPort
 import com.groom.customer.domain.port.LoadRefreshTokenPort
 import com.groom.customer.domain.port.LoadUserPort

@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT
 import com.groom.customer.application.dto.LoginCommand
 import com.groom.customer.application.dto.LogoutCommand
 import com.groom.customer.application.dto.RefreshTokenCommand
-import org.springframework.boot.test.context.SpringBootTest
 import com.groom.customer.common.exception.RefreshTokenException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlGroup
 import java.util.UUID

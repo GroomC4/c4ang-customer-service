@@ -74,7 +74,8 @@ class UserPolicy(
      */
     fun checkUserIsActive(user: User) {
         if (!user.isActive) {
-            throw com.groom.customer.common.exception.AuthenticationException.UserNotFoundByEmail(user.email)
+            throw com.groom.customer.common.exception.AuthenticationException
+                .UserNotFoundByEmail(user.email)
         }
     }
 }

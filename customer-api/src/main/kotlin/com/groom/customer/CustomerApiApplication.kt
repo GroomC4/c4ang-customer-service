@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync
 @SpringBootApplication(
     exclude = [
         org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration::class,
-    ]
+    ],
 )
 @ConfigurationPropertiesScan
 @EnableAsync
