@@ -12,7 +12,9 @@ plugins {
 
 allprojects {
     group = "com.groom"
-    version = "0.0.1-SNAPSHOT"
+    // GitHub Actions에서 태그를 푸시하면 GITHUB_REF_NAME 환경변수로 버전을 가져옴
+    // 예: v1.0.0 -> 1.0.0
+    version = System.getenv("GITHUB_REF_NAME")?.removePrefix("v") ?: "0.0.1-SNAPSHOT"
 
     repositories {
         mavenCentral()
