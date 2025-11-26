@@ -8,8 +8,6 @@ plugins {
     `maven-publish`
 }
 
-// Platform Core 버전 관리
-val platformCoreVersion = "1.2.9"
 // Spring Cloud Contract 버전
 val springCloudContractVersion = "4.1.4"
 
@@ -47,11 +45,11 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
 
-    // Platform Core - DataSource (프로덕션 환경)
-    implementation("com.groom.platform:datasource-starter:$platformCoreVersion")
+    // Platform Core - 통합 모듈 (submodule 직접 참조)
+    implementation("com.groom.platform:platform-core")
 
-    // Platform Core - Testcontainers (테스트 전용)
-    testImplementation("com.groom.platform:testcontainers-starter:$platformCoreVersion")
+    // Platform Core - Testcontainers (테스트 전용, 기존 유지)
+    testImplementation("com.groom.platform:testcontainers-starter")
 
     // Spring Cloud Contract (Provider-side testing)
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:$springCloudContractVersion")
@@ -120,31 +118,6 @@ val integrationTest by tasks.registering(Test::class) {
     shouldRunAfter(tasks.test)
 }
 
-// Docker Compose 연동 태스크 추가
-val dockerComposeUp by tasks.registering(Exec::class) {
-    group = "docker"
-    description = "Run docker compose up for local infrastructure."
-    commandLine(
-        "sh",
-        "-c",
-        "command -v docker >/dev/null 2>&1 && docker compose up -d || echo 'docker not found, skipping docker compose up'",
-    )
-    workingDir = project.projectDir
-}
-val dockerComposeDown by tasks.registering(Exec::class) {
-    group = "docker"
-    description = "Run docker compose down for local infrastructure."
-    commandLine(
-        "sh",
-        "-c",
-        "command -v docker >/dev/null 2>&1 && docker compose down || echo 'docker not found, skipping docker compose down'",
-    )
-    workingDir = project.projectDir
-}
-tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    dependsOn(dockerComposeUp)
-    finalizedBy(dockerComposeDown)
-}
 
 // Spring Cloud Contract 설정
 contracts {
