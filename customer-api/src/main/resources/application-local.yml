@@ -10,6 +10,10 @@ platform:
       enabled: true
     kafka:
       enabled: false  # 이 서비스는 Kafka 미사용
+      # Kafka 활성화 시 아래 설정 추가:
+      # enabled: true
+      # schema-registry:
+      #   enabled: true  # Schema Registry 자동 시작 (기본값)
 
   datasource:
     replica-enabled: true

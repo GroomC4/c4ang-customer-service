@@ -45,11 +45,11 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
 
-    // Platform Core - 통합 모듈 (submodule 직접 참조)
-    implementation("com.groom.platform:platform-core")
+    // Platform Core - 통합 모듈 (GitHub Packages)
+    implementation("com.groom.platform:platform-core:2.0.0")
 
-    // Platform Core - Testcontainers (테스트 전용, 기존 유지)
-    testImplementation("com.groom.platform:testcontainers-starter")
+    // Platform Core - Testcontainers (테스트 전용)
+    testImplementation("com.groom.platform:testcontainers-starter:2.0.0")
 
     // Spring Cloud Contract (Provider-side testing)
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:$springCloudContractVersion")
@@ -117,7 +117,6 @@ val integrationTest by tasks.registering(Test::class) {
 
     shouldRunAfter(tasks.test)
 }
-
 
 // Spring Cloud Contract 설정
 contracts {
