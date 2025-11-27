@@ -9,7 +9,7 @@ plugins {
 }
 
 // Platform Core 버전 관리
-val platformCoreVersion = "2.0.0"
+val platformCoreVersion = "2.0.2"
 // Spring Cloud Contract 버전
 val springCloudContractVersion = "4.1.4"
 
@@ -48,10 +48,10 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
 
     // Platform Core - DataSource (프로덕션 환경)
-    implementation("com.groom.platform:platform-core:$platformCoreVersion")
+    implementation("io.github.groomc4:platform-core:$platformCoreVersion")
 
     // Platform Core - Testcontainers (테스트 전용)
-    testImplementation("com.groom.platform:testcontainers-starter:$platformCoreVersion")
+    testImplementation("io.github.groomc4:testcontainers-starter:$platformCoreVersion")
 
     // Spring Cloud Contract (Provider-side testing)
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:$springCloudContractVersion")
@@ -143,7 +143,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/GroomC4/c4ang-customer-service")
+            url = uri("https://maven.pkg.github.com/GroomC4/c4ang-packages-hub")
             credentials {
                 username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") as String?
                 password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") as String?

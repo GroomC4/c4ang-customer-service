@@ -48,7 +48,7 @@ jobs:
         if: success() && startsWith(github.ref, 'refs/tags/v')
         env:
           GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
         run: ./gradlew :customer-api:publish --no-daemon
 
       - name: Upload test results
