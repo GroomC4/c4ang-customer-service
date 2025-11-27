@@ -9,7 +9,7 @@ plugins {
 }
 
 // Platform Core 버전 관리
-val platformCoreVersion = "1.2.9"
+val platformCoreVersion = "2.0.0"
 // Spring Cloud Contract 버전
 val springCloudContractVersion = "4.1.4"
 
@@ -118,32 +118,6 @@ val integrationTest by tasks.registering(Test::class) {
     }
 
     shouldRunAfter(tasks.test)
-}
-
-// Docker Compose 연동 태스크 추가
-val dockerComposeUp by tasks.registering(Exec::class) {
-    group = "docker"
-    description = "Run docker compose up for local infrastructure."
-    commandLine(
-        "sh",
-        "-c",
-        "command -v docker >/dev/null 2>&1 && docker compose up -d || echo 'docker not found, skipping docker compose up'",
-    )
-    workingDir = project.projectDir
-}
-val dockerComposeDown by tasks.registering(Exec::class) {
-    group = "docker"
-    description = "Run docker compose down for local infrastructure."
-    commandLine(
-        "sh",
-        "-c",
-        "command -v docker >/dev/null 2>&1 && docker compose down || echo 'docker not found, skipping docker compose down'",
-    )
-    workingDir = project.projectDir
-}
-tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    dependsOn(dockerComposeUp)
-    finalizedBy(dockerComposeDown)
 }
 
 // Spring Cloud Contract 설정
