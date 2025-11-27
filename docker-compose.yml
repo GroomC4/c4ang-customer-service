@@ -1,0 +1,165 @@
+services:
+  # ============================================
+  # Customer API Application
+  # ============================================
+  customer-api:
+    image: 963403601423.dkr.ecr.ap-northeast-2.amazonaws.com/c4ang-customer-service:${IMAGE_TAG:-latest}
+    container_name: customer-api
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+
+      # PostgreSQL Master DataSource
+      SPRING_DATASOURCE_MASTER_URL: jdbc:postgresql://postgres-primary:5432/customer_db
+      SPRING_DATASOURCE_MASTER_USERNAME: application
+      SPRING_DATASOURCE_MASTER_PASSWORD: application
+
+      # PostgreSQL Replica DataSource
+      SPRING_DATASOURCE_REPLICA_URL: jdbc:postgresql://postgres-replica:5432/customer_db
+      SPRING_DATASOURCE_REPLICA_USERNAME: application
+      SPRING_DATASOURCE_REPLICA_PASSWORD: application
+
+      # Redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      # JWT Security
+      SECURITY_JWT_SECRET: ${JWT_SECRET:-docker-compose-secret-change-in-production}
+
+      # Feign Client
+      FEIGN_CLIENTS_STORE_SERVICE_URL: ${STORE_SERVICE_URL:-http://store-service:8081}
+
+      # JVM Options
+      JAVA_OPTS: >-
+        -Xms512m
+        -Xmx1024m
+        -XX:+UseG1GC
+        -Djava.security.egd=file:/dev/./urandom
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - customer-network
+    restart: unless-stopped
+
+  # ============================================
+  # PostgreSQL Primary (Master)
+  # ============================================
+  postgres-primary:
+    image: bitnami/postgresql:latest
+    environment:
+      # 기본 설정
+      POSTGRESQL_DATABASE: customer_db
+      POSTGRESQL_USERNAME: application
+      POSTGRESQL_PASSWORD: application
+      # 복제 설정 (Primary)
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: replicator_password
+      # 성능 설정
+      POSTGRESQL_EXTRA_FLAGS: >-
+        -c wal_level=replica
+        -c max_wal_senders=3
+        -c wal_keep_size=64MB
+        -c hot_standby=on
+    ports:
+      - "5432"
+    volumes:
+      - postgres_primary_data:/bitnami/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U application -d customer_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+    networks:
+      - customer-network
+    restart: unless-stopped
+
+  # ============================================
+  # PostgreSQL Replica (Slave)
+  # ============================================
+  postgres-replica:
+    image: bitnami/postgresql:latest
+    environment:
+      # 복제 설정 (Replica)
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: replicator_password
+      POSTGRESQL_MASTER_HOST: postgres-primary
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      # 애플리케이션 사용자 (Primary에서 복제됨)
+      POSTGRESQL_USERNAME: application
+      POSTGRESQL_PASSWORD: application
+      # Hot Standby 활성화 (읽기 전용 쿼리 허용)
+      POSTGRESQL_EXTRA_FLAGS: >-
+        -c hot_standby=on
+        -c hot_standby_feedback=on
+    ports:
+      - "5432"
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U application -d customer_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 30s
+    networks:
+      - customer-network
+    restart: unless-stopped
+
+  # ============================================
+  # Redis (Cache & Session)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - customer-network
+    restart: unless-stopped
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_primary_data:
+    driver: local
+  postgres_replica_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  customer-network:
+    driver: bridge
+    name: customer-network
