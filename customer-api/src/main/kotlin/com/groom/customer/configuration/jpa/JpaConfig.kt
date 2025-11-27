@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateProperties
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
@@ -21,7 +20,7 @@ import javax.sql.DataSource
 /**
  * JPA 설정
  *
- * Platform Core의 datasource-starter가 제공하는 Primary DataSource를 사용합니다.
+ * Platform Core의 platform-core가 제공하는 Primary DataSource를 사용합니다.
  * - @Primary DataSource: DynamicRoutingDataSource (Master/Replica 자동 라우팅)
  * - @Transactional(readOnly = true): Replica DB 사용
  * - @Transactional(readOnly = false) 또는 기본: Master DB 사용

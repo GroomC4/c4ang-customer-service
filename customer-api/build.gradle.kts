@@ -48,7 +48,7 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
 
     // Platform Core - DataSource (프로덕션 환경)
-    implementation("com.groom.platform:datasource-starter:$platformCoreVersion")
+    implementation("com.groom.platform:platform-core:$platformCoreVersion")
 
     // Platform Core - Testcontainers (테스트 전용)
     testImplementation("com.groom.platform:testcontainers-starter:$platformCoreVersion")
