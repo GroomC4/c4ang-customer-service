@@ -5,11 +5,12 @@ FROM gradle:8.5-jdk21 AS build
 ARG GITHUB_ACTOR
 ARG GITHUB_TOKEN
 
-# 환경 변수로 설정 (Gradle이 사용)
-ENV GITHUB_ACTOR=${GITHUB_ACTOR}
-ENV GITHUB_TOKEN=${GITHUB_TOKEN}
-
 WORKDIR /app
+
+# Gradle properties 파일에 인증 정보 저장 (ENV 대신)
+RUN mkdir -p ~/.gradle && \
+    echo "gpr.user=${GITHUB_ACTOR}" >> ~/.gradle/gradle.properties && \
+    echo "gpr.key=${GITHUB_TOKEN}" >> ~/.gradle/gradle.properties
 
 # Copy gradle configuration files
 COPY build.gradle.kts settings.gradle.kts gradlew ./
