@@ -8,8 +8,8 @@
 
 # Gradle
 .gradle
-build/
-*/build/
+# build/ 디렉토리는 JAR 복사를 위해 포함 (GitHub Actions에서 빌드된 JAR 사용)
+!customer-api/build/libs/*.jar
 
 # Claude
 .claude
