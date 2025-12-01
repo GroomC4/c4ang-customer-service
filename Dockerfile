@@ -8,9 +8,9 @@ ARG GITHUB_TOKEN
 WORKDIR /app
 
 # Gradle properties 파일에 인증 정보 저장 (ENV 대신)
-RUN mkdir -p ~/.gradle && \
-    echo "gpr.user=${GITHUB_ACTOR}" >> ~/.gradle/gradle.properties && \
-    echo "gpr.key=${GITHUB_TOKEN}" >> ~/.gradle/gradle.properties
+RUN mkdir -p ~/.gradle
+RUN echo "gpr.user=$GITHUB_ACTOR" >> ~/.gradle/gradle.properties && \
+    echo "gpr.key=$GITHUB_TOKEN" >> ~/.gradle/gradle.properties
 
 # Copy gradle configuration files
 COPY build.gradle.kts settings.gradle.kts gradlew ./
