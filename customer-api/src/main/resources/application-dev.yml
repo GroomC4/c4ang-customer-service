@@ -1,0 +1,85 @@
+# ====================================
+# dev 환경 설정 (k3d 개발 환경)
+# ====================================
+# k3d 클러스터 내 PostgreSQL, Redis 등 인프라 사용
+# 환경변수로 실제 연결 정보 주입
+
+spring:
+  datasource:
+    master:
+      url: ${DB_MASTER_URL:jdbc:postgresql://customer-db:5432/customer_db}
+      username: ${DB_USERNAME:application}
+      password: ${DB_PASSWORD:application}
+      driver-class-name: org.postgresql.Driver
+    replica:
+      url: ${DB_REPLICA_URL:jdbc:postgresql://customer-db:5432/customer_db}
+      username: ${DB_USERNAME:application}
+      password: ${DB_PASSWORD:application}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 5
+
+  data:
+    redis:
+      host: ${REDIS_HOST:cache-redis}
+      port: ${REDIS_PORT:6379}
+
+# Platform Core DataSource 라우팅 설정
+platform:
+  datasource:
+    replica-enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    properties:
+      hibernate:
+        format_sql: true  # SQL 포맷팅 활성화 (개발 환경)
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false  # logback으로 제어
+
+# ====================================
+# dev 환경 로그 레벨 (k3d 개발 환경)
+# ====================================
+logging:
+  level:
+    # ROOT 레벨 - INFO
+    root: INFO
+
+    # 프로젝트 패키지 - DEBUG 레벨 (개발 디버깅용)
+    com.groom.customer: DEBUG
+
+    # Spring Framework - INFO
+    org.springframework: INFO
+    org.springframework.web: DEBUG  # HTTP 요청/응답 디버깅
+
+    # Hibernate/JPA - SQL 쿼리 디버깅
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG  # SQL 쿼리 출력
+    org.hibernate.orm.jdbc.bind: DEBUG  # SQL 파라미터 바인딩
+
+  file:
+    path: ./logs
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-environment-secret-please-change}
+    issuer: ecommerce-service-api
+    accessTokenExpirationMinutes: 30
+    refreshTokenExpirationDays: 7
+
+feign:
+  clients:
+    store-service:
+      url: ${STORE_SERVICE_URL:http://store-service:8081}
+      connect-timeout: 5000
+      read-timeout: 5000
+      logger-level: full
+  client:
+    config:
+      store-service:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: full

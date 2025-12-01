@@ -1,17 +1,32 @@
 spring:
   datasource:
     master:
-      url: jdbc:postgresql://c4-app-db.cfkm648uqlug.ap-northeast-2.rds.amazonaws.com:5432/customer_db
-      username: application
-      password: application
-      driver-class-name: org.postgresql.Driver
-    replica:
-      url: jdbc:postgresql://c4-app-db.cfkm648uqlug.ap-northeast-2.rds.amazonaws.com:5432/customer_db
-      username: application
-      password: application
+      url: ${DB_MASTER_URL:jdbc:postgresql://customer-db:5432/customer_db}
+      username: ${DB_USERNAME:application}
+      password: ${DB_PASSWORD:application}
       driver-class-name: org.postgresql.Driver
       hikari:
-        maximum-pool-size: 5
+        maximum-pool-size: ${DB_MASTER_POOL_SIZE:10}
+        minimum-idle: ${DB_MASTER_MIN_IDLE:5}
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+    replica:
+      url: ${DB_REPLICA_URL:jdbc:postgresql://customer-db:5432/customer_db}
+      username: ${DB_USERNAME:application}
+      password: ${DB_PASSWORD:application}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: ${DB_REPLICA_POOL_SIZE:10}
+        minimum-idle: ${DB_REPLICA_MIN_IDLE:5}
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+  data:
+    redis:
+      host: ${REDIS_HOST:cache-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 # Platform Core DataSource 라우팅 설정
 platform:
   datasource:
@@ -51,14 +66,14 @@ logging:
     org.hibernate.type.descriptor.sql: OFF
 
   file:
-    path: ./logs
+    path: ${LOG_PATH:/var/log/customer-service}
 
 security:
   jwt:
-    secret: local-development-secret-please-change
-    issuer: ecommerce-service-api
-    accessTokenExpirationMinutes: 5
-    refreshTokenExpirationDays: 3
+    secret: ${JWT_SECRET}
+    issuer: ${JWT_ISSUER:ecommerce-service-api}
+    accessTokenExpirationMinutes: ${JWT_ACCESS_TOKEN_EXPIRATION:5}
+    refreshTokenExpirationDays: ${JWT_REFRESH_TOKEN_EXPIRATION:3}
 
 feign:
   clients:
