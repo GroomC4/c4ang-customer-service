@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+
+# Gradle
+.gradle
+build/
+*/build/
+
+# Claude
+.claude
+
+# Logs
+logs/
+
+# Documentation
+docs/
+README.md
+
+# Local development
+*.log
+*.tmp

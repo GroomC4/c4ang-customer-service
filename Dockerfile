@@ -1,29 +1,27 @@
 # Build stage
 FROM gradle:8.5-jdk21 AS build
 
-# GitHub Packages 인증을 위한 ARG
+WORKDIR /app
+
+# GitHub Packages 인증을 위한 ARG (RUN 직전에 선언하여 캐시 최적화)
 ARG GITHUB_ACTOR
 ARG GITHUB_TOKEN
 
-WORKDIR /app
-
-# Gradle properties 파일에 인증 정보 저장 (ENV 대신)
-RUN mkdir -p ~/.gradle
-RUN echo "gpr.user=$GITHUB_ACTOR" >> ~/.gradle/gradle.properties && \
-    echo "gpr.key=$GITHUB_TOKEN" >> ~/.gradle/gradle.properties
-
-# Copy gradle configuration files
+# Gradle 설정 파일 복사
 COPY build.gradle.kts settings.gradle.kts gradlew ./
 COPY gradle ./gradle
 COPY customer-api/build.gradle.kts ./customer-api/
 
-# Download dependencies (cache layer)
-RUN gradle dependencies --no-daemon || true
+# Gradle properties 파일에 인증 정보 저장 및 의존성 다운로드
+RUN mkdir -p ~/.gradle && \
+    echo "gpr.user=$GITHUB_ACTOR" >> ~/.gradle/gradle.properties && \
+    echo "gpr.key=$GITHUB_TOKEN" >> ~/.gradle/gradle.properties && \
+    gradle :customer-api:dependencies --no-daemon || true
 
-# Copy source code
-COPY . .
+# 소스 코드 복사
+COPY customer-api/src ./customer-api/src
 
-# Build application (skip tests as they run in CI)
+# 애플리케이션 빌드 (테스트는 CI에서 별도 실행)
 RUN gradle :customer-api:bootJar --no-daemon -x test
 
 # Runtime stage
