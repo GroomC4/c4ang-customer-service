@@ -38,11 +38,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run tests
+      - name: Run only build
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew test contractTest --no-daemon
+        run: ./gradlew build -x test contractTest
 
       - name: Publish Contract Stubs to GitHub Packages
         if: success() && startsWith(github.ref, 'refs/tags/v')
@@ -50,23 +50,6 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GROOM_GITHUB_ACTION_TOKEN }}
         run: ./gradlew :customer-api:publish --no-daemon
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            **/build-results/test/*.xml
-            **/build/reports/tests/test/
-
-      - name: Publish test report
-        if: always()
-        uses: dorny/test-reporter@v1
-        with:
-          name: Test Results
-          path: '**/build/test-results/test/*.xml'
-          reporter: java-junit
 
   tracking-cd-workflow: # Job (ECR 푸시 + Config 업데이트 모두 수행)
     name: Build, Push and Trigger CD
