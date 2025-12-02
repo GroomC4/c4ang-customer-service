@@ -30,6 +30,8 @@ class CustomerAuthenticationService(
      */
     @Transactional
     fun login(command: LoginCommand): LoginResult {
+        throw IllegalStateException("쇼케이스를 위한 에러가 발생하였습니다.")
+
         // 1. 일반 고객 사용자 조회
         val user =
             loadUserPort.loadByEmailAndRole(command.email, UserRole.CUSTOMER)
