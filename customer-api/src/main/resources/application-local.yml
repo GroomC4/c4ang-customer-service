@@ -60,7 +60,7 @@ security:
 feign:
   clients:
     store-service:
-      url: http://localhost:8081
+      url: http://localhost:8083
       connect-timeout: 10000
       read-timeout: 10000
       logger-level: full
