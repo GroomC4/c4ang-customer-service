@@ -45,6 +45,7 @@ security:
   jwt:
     key-id: ecommerce-key-1
     issuer: ecommerce-service-api
+    audience: ecommerce-api  # Istio RequestAuthentication과 일치해야 함
     accessTokenExpirationMinutes: 5
     refreshTokenExpirationDays: 3
     # RSA 키는 환경별 프로필에서 설정

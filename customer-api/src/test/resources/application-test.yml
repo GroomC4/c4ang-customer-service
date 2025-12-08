@@ -54,6 +54,7 @@ security:
   jwt:
     key-id: test-key-1
     issuer: test-issuer
+    audience: test-audience  # 테스트 환경용 audience
     accessTokenExpirationMinutes: 5
     refreshTokenExpirationDays: 7
     # 테스트용 RSA 키

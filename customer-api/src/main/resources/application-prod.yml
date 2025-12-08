@@ -72,6 +72,7 @@ security:
   jwt:
     key-id: ${JWT_KEY_ID:ecommerce-key-1}
     issuer: ${JWT_ISSUER:ecommerce-service-api}
+    audience: ${JWT_AUDIENCE:ecommerce-api}  # Istio RequestAuthentication과 일치해야 함
     accessTokenExpirationMinutes: ${JWT_ACCESS_TOKEN_EXPIRATION:5}
     refreshTokenExpirationDays: ${JWT_REFRESH_TOKEN_EXPIRATION:3}
     # 운영 환경에서는 반드시 환경변수 또는 Kubernetes Secret으로 주입

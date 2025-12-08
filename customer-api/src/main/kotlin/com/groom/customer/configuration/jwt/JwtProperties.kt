@@ -11,6 +11,7 @@ data class JwtProperties
         val publicKey: String,
         val keyId: String = "ecommerce-key-1",
         val issuer: String = "ecommerce-service-api",
+        val audience: String = "ecommerce-api", // Istio RequestAuthentication과 일치해야 함
         val accessTokenExpirationMinutes: Long = 5, // 5분
         val refreshTokenExpirationDays: Long = 3, // 3일
     ) {
