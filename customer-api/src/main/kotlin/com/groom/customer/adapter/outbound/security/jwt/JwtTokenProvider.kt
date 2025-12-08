@@ -79,7 +79,8 @@ class JwtTokenProvider(
             .replace("-----END PRIVATE KEY-----", "")
             .replace("-----BEGIN RSA PRIVATE KEY-----", "")
             .replace("-----END RSA PRIVATE KEY-----", "")
-            .replace("\\s".toRegex(), "")
+            .replace("\\n", "") // 리터럴 \n 문자열 처리
+            .replace("\\s".toRegex(), "") // 실제 공백/개행 처리
 
         val keyBytes = Base64.getDecoder().decode(keyContent)
         val keySpec = PKCS8EncodedKeySpec(keyBytes)
@@ -93,7 +94,8 @@ class JwtTokenProvider(
             .replace("-----END PUBLIC KEY-----", "")
             .replace("-----BEGIN RSA PUBLIC KEY-----", "")
             .replace("-----END RSA PUBLIC KEY-----", "")
-            .replace("\\s".toRegex(), "")
+            .replace("\\n", "") // 리터럴 \n 문자열 처리
+            .replace("\\s".toRegex(), "") // 실제 공백/개행 처리
 
         val keyBytes = Base64.getDecoder().decode(keyContent)
         val keySpec = X509EncodedKeySpec(keyBytes)
