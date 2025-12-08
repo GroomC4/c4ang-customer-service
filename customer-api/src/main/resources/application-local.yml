@@ -52,10 +52,50 @@ logging:
 
 security:
   jwt:
-    secret: local-development-secret-please-change
+    key-id: ecommerce-key-1
     issuer: ecommerce-service-api
     accessTokenExpirationMinutes: 60
     refreshTokenExpirationDays: 3
+    # 로컬 개발용 RSA 키 (테스트 전용 - 운영 환경에서는 사용 금지)
+    private-key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDxTTcRznOz0W0Y
+      +R1wnfJwRlxPuPjikVNaLHxJS5XeMI6twAzNIjdQ5IGDEgyoHuBApHTsTqRLMSvr
+      Kn5zXY/aVGdxfoUatSKBMqSBM3wcXhjTFTkHzEoOdzSrmHN7+pFEwY0uCuaUtXVN
+      LRRjoo9OHz9kwErJTr8Ot0rgpWekgxkRoFkBuf3EwYyJxkx7JFdngwEv7VZefSv9
+      8rqnsvgq793OtGP2PwN6BcZ5MMN1jllWqjgPiXeVxFdn93u7/HhWfjN5xwXZZn0+
+      uWD28lAI44SbzPZ800fQmc8R7Ex8/OGWHgKkY3yawpvIPDDNMDb0bV92oaQiHXQc
+      Fy+PDCX3AgMBAAECggEBAIzUXOSWkm6LNtoRYj484KboWa3prdBFstj5B5ybcZ9Y
+      xZzgblg2tQQQKQo/OYXRZ14y3U6hYz/DNfetOFnKbE+nXSwfBD4fI0E2Nk51puTD
+      gkeHpl5Hu50Ps3zGn/fmuGvhbq1FjWeTNB/TxIeV839Lu2ro030D6XwEO746qu+W
+      taZYlXqU5iouylRGibrvgP6g1/lLm9BzN9vKKSWux/c5SfptXL59775h7+qvRO4Z
+      Lbah8ZhO/hzZUDCfvdYUi9KrSbz9D3q0Ptdw3Emi7nm7udpZn0ypk/3Zjw6qLNXB
+      L/I3/Y44ehE2KP+y88WA4agUKuW44b0GxF0wIixDtsECgYEA+mNrLTmZ8KJnOZi+
+      Btlf533/X35+wg+KoLQ66vxebnSRyjz8plMGGdtFZEbVXDCHY8pBy0MIqISjfybPS
+      5forJZyKJlOu5NLFVy9xQTceCWqLJLUOY1vHScdyXiuqUJF6yz86F/qerqapJry5
+      EnLrZgu/rbj8ASkBY9/xWHaNuSECgYEA9rWpgMLvg/X99RXZ77lpfkmMO3UpGptg
+      Nu2LmTsGHC9UEDeq8Pdhvx17lZQI1lprwoJ1fHNMMV4LfjkleNnuEEANoRT+udrn
+      8zqDg0AotrwniC+YKoCfnXkjLZ68JdT3TbN5i+p0zSOZGQRx2PagP3NU4OgyIEDE
+      nfBriCfsBBcCgYEAgExjBZhnTcsZk4S1kjLeFnQGfFqKCvof7H6IqBQDs8CSRt45
+      gzSqnsVkm1NNGDVbwebMPjXPepBEI0lWPmsyoqIUk9D7Y9qwLZ1srdr9NBv40kVH
+      6xeDBUYCT0iWi5QP1IdAUDsmBh31vJilSFPEVNSeUfjggAOv56o/M3ID6qECgYBT
+      7om0HJ2Pr2iusLhsLhANvsfOkpVhT+rzxOzxPHtfq1pWChpF0GOYuVcKFErNYgW3
+      Ltr5c+BAC1atopN1Ae9T5/a7DoF6iVbQEOAdDv7K7EgmtMp36zpiQIwPQSmRVVqt
+      PJnlV+ZUw/+Z20FAJudtrrb5rQUgo+hAM0LiF3LcEQKBgAFqC4FPkrVC8A9FHNDK
+      yyqyFXnIfKVq0dx6lVf+Bh8SR+DfMErkLHIJUufeZeEtUOIGGdbvpHQ/mIBCBpLw
+      FWpgDMRkquXvBEVPAgXddoB7/Q6k8DyNJj+uKQxo+moWHoykn2GbST7CtlPmeknh
+      bcfouDLFv+G3pWwPLoOSQ5B6
+      -----END PRIVATE KEY-----
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8U03Ec5zs9FtGPkdcJ3y
+      cEZcT7j44pFTWix8SUuV3jCOrcAMzSI3UOSBgxIMqB7gQKR07E6kSzEr6yp+c12P
+      2lRncX6FGrUigTKkgTN8HF4Y0xU5B8xKDnc0q5hze/qRRMGNLgrmlLV1TS0UY6KP
+      Th8/ZMBKyU6/DrdK4KVnpIMZEaBZAbn9xMGMicZMeyRXZ4MBL+1WXn0r/fK6p7L4
+      Ku/dzrRj9j8DegXGeTDDdY5ZVqo4D4l3lcRXZ/d7u/x4Vn4zeccF2WZ9Prlg9vJQ
+      COOEm8z2fNNH0JnPEexMfPzhlh4CpGN8msKbyDwwzTA29G1fdqGkIh10HBcvjwwl
+      9wIDAQAB
+      -----END PUBLIC KEY-----
 
 feign:
   clients:

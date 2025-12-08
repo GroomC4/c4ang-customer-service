@@ -7,25 +7,30 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding
 data class JwtProperties
     @ConstructorBinding
     constructor(
-        val secret: String,
+        val privateKey: String,
+        val publicKey: String,
+        val keyId: String = "ecommerce-key-1",
         val issuer: String = "ecommerce-service-api",
         val accessTokenExpirationMinutes: Long = 5, // 5분
         val refreshTokenExpirationDays: Long = 3, // 3일
     ) {
-        companion object {
-            private const val MIN_SECRET_LENGTH = 32 // 최소 32자 (256비트)
-        }
-
         init {
-            // 비밀 키 존재 여부 검증
-            require(secret.isNotBlank()) {
-                "JWT secret must not be blank"
+            // RSA Private Key 존재 여부 검증
+            require(privateKey.isNotBlank()) {
+                "JWT privateKey must not be blank"
             }
 
-            // 비밀 키 강도 검증 (약한 비밀 키 사용 방지)
-            require(secret.length >= MIN_SECRET_LENGTH) {
-                "JWT secret must be at least $MIN_SECRET_LENGTH characters long for security. " +
-                    "Current length: ${secret.length}"
+            // RSA Public Key 존재 여부 검증
+            require(publicKey.isNotBlank()) {
+                "JWT publicKey must not be blank"
+            }
+
+            // PEM 형식 검증
+            require(privateKey.contains("-----BEGIN") && privateKey.contains("PRIVATE KEY-----")) {
+                "JWT privateKey must be in PEM format"
+            }
+            require(publicKey.contains("-----BEGIN") && publicKey.contains("PUBLIC KEY-----")) {
+                "JWT publicKey must be in PEM format"
             }
 
             // 만료 시간 검증

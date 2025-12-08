@@ -29,6 +29,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.retry:spring-retry")
     implementation("com.auth0:java-jwt:4.4.0")
+    // RSA Key Pair 및 JWKS 지원
+    implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0")
 
     // Spring Cloud BOM (Spring Boot 3.3.4와 호환)

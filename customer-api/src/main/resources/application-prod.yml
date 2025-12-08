@@ -70,10 +70,13 @@ logging:
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    key-id: ${JWT_KEY_ID:ecommerce-key-1}
     issuer: ${JWT_ISSUER:ecommerce-service-api}
     accessTokenExpirationMinutes: ${JWT_ACCESS_TOKEN_EXPIRATION:5}
     refreshTokenExpirationDays: ${JWT_REFRESH_TOKEN_EXPIRATION:3}
+    # 운영 환경에서는 반드시 환경변수 또는 Kubernetes Secret으로 주입
+    private-key: ${JWT_PRIVATE_KEY}
+    public-key: ${JWT_PUBLIC_KEY}
 
 feign:
   clients:
