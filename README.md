@@ -8,6 +8,49 @@ e-commerce 플랫폼의 회원 관리 및 인증을 전담합니다. 일반 고�
 
 > **Note**: API 인증/인가는 Istio API Gateway에서 처리하며, 이 서비스는 토큰 발급 및 사용자 관리에 집중합니다.
 
+## 인증 (Authentication)
+
+### JWT 토큰 구조
+
+RSA (RS256) 알고리즘 기반의 비대칭 키 서명을 사용합니다.
+
+| 토큰 | 만료 시간 | 용도 |
+|------|----------|------|
+| Access Token | 5분 (dev) | API 요청 인증 |
+| Refresh Token | 7일 | Access Token 갱신 |
+
+### 토큰 Payload 구조
+```json
+{
+  "sub": "user-id",
+  "role": "CUSTOMER | OWNER",
+  "iat": 1234567890,
+  "exp": 1234567890,
+  "iss": "ecommerce-service-api",
+  "aud": "ecommerce-api"
+}
+```
+
+### 인증 흐름
+
+```
+1. 클라이언트 → Customer Service: 로그인 요청
+2. Customer Service → 클라이언트: JWT 토큰 발급 (Access + Refresh)
+3. 클라이언트 → Istio Gateway: API 요청 (Authorization: Bearer <token>)
+4. Gateway (RequestAuthentication): JWT 검증, 클레임 추출
+5. Gateway (AuthorizationPolicy): Role 기반 접근 제어
+6. Gateway → Backend Service: X-User-Id, X-User-Role 헤더 전달
+```
+
+### JWKS 엔드포인트
+
+공개키는 JWKS (JSON Web Key Set) 형식으로 제공됩니다:
+```
+GET /.well-known/jwks.json
+```
+
+Istio RequestAuthentication이 이 엔드포인트에서 공개키를 가져와 JWT를 검증합니다.
+
 ## 주요 기능
 
 - **회원 관리**: 고객/판매자 회원가입, 프로필 관리, Role 기반 권한 (CUSTOMER, OWNER)
@@ -100,7 +143,8 @@ open http://localhost:8081/swagger-ui.html
 
 | 변수 | 설명 | 필수 |
 |------|------|------|
-| `JWT_SECRET` | JWT 서명 키 | O |
+| `JWT_PRIVATE_KEY` | JWT 서명용 RSA Private Key (PEM 형식) | O |
+| `JWT_PUBLIC_KEY` | JWT 검증용 RSA Public Key (PEM 형식) | O |
 | `SPRING_DATASOURCE_URL` | PostgreSQL URL | O |
 | `SPRING_DATASOURCE_USERNAME` | DB 사용자명 | O |
 | `SPRING_DATASOURCE_PASSWORD` | DB 비밀번호 | O |
