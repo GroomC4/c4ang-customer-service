@@ -90,4 +90,42 @@ class UserFactory {
 
         return user.apply { this.profile = profile }
     }
+
+    /**
+     * 새로운 관리자 사용자를 생성한다.
+     * User와 UserProfile을 함께 생성하고 양방향 관계를 설정한다.
+     * 테스트/개발 환경용.
+     *
+     * @param username 사용자 이름 (2-10자 한글)
+     * @param email 이메일 주소
+     * @param passwordHash 해시된 비밀번호
+     * @param phoneNumber 전화번호 (010-1234-5678 형식)
+     * @return 생성된 User 엔티티 (UserProfile이 포함됨)
+     */
+    fun createNewManager(
+        username: Username,
+        email: Email,
+        passwordHash: String,
+        phoneNumber: PhoneNumber,
+    ): User {
+        val user =
+            User(
+                username = username.value,
+                email = email.value,
+                passwordHash = passwordHash,
+                role = UserRole.MANAGER,
+            )
+
+        val profile =
+            UserProfile(
+                fullName = username.value,
+                phoneNumber = phoneNumber.value,
+                contactEmail = email.value,
+                defaultAddress = null,
+            ).apply {
+                this.user = user
+            }
+
+        return user.apply { this.profile = profile }
+    }
 }
